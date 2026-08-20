@@ -1,29 +1,51 @@
-# Vision One Releases
+# Vision One Installer Releases
 
-This repository hosts public Windows installer releases for Vision One by EN-CO OHG.
-
-## Purpose
-
-Vision One uses the GitHub Releases published in this repository to check for available installer updates. The application looks for semantic-versioned release tags such as `7.2.0` or `7.2.0-beta.16` and downloads the Windows `.exe` installer asset from the matching release.
-
-The application source code, internal build configuration, product documentation, and development history are not maintained in this repository.
+This repository provides the official public Windows installer downloads for Vision One, a software product by EN-CO OHG.
 
 ## Downloads
 
-Installers are published under [GitHub Releases](https://github.com/ENCO-OHG/vision-one-releases/releases).
+Current and previous installer packages are available from the [Releases](https://github.com/ENCO-OHG/vision-one-releases/releases) page.
 
-Use the `.exe` asset attached to a release to install or update Vision One on Windows. Beta, alpha, and release-candidate builds are prerelease versions and should only be used where prerelease software is explicitly accepted.
+Each release contains the Windows installer asset for the corresponding Vision One version. Use the attached `.exe` file to install Vision One or update an existing installation.
 
-## Updates
+## Release Channels
 
-The Vision One update check is a manual update workflow. When an update is available, Vision One shows the installer download link. The installer must be downloaded and executed by an authorized Windows user or administrator.
+Stable releases are intended for production use according to the applicable customer agreement and project-specific deployment requirements.
+
+Prerelease versions, including alpha, beta, and release-candidate builds, are provided for validation, acceptance testing, and early deployment preparation. They may change before the final release and should only be used in environments where prerelease software is explicitly accepted.
+
+## Updating Vision One
+
+Vision One includes a manual update check that refers to the GitHub Releases published in this repository. When a newer eligible version is available, the application displays the installer download link.
+
+The installer must be downloaded and executed by an authorized Windows user or administrator. Follow the project-specific maintenance procedure before updating production systems, including backups where required.
+
+## Source Code and Documentation
+
+This repository is dedicated to public installer distribution. It does not contain the Vision One source code, internal build configuration, or full product documentation.
+
+For product documentation, operational guidance, licensing information, or project-specific support, contact EN-CO OHG through the official support channels.
 
 ## License
 
-Vision One and the installer assets in this repository are proprietary EN-CO OHG software. See [LICENSE](LICENSE).
+Vision One, including the installer packages and release assets provided here, is proprietary EN-CO OHG software. See [LICENSE](LICENSE).
 
 Third-party components included in installer packages remain subject to their own license terms and notices.
 
-## Support
+## Security
 
-Do not use public GitHub issues for customer support, operational incidents, or security reports. Contact EN-CO OHG through the agreed customer support channel.
+Do not report security vulnerabilities through public GitHub issues, pull requests, or release comments. See [SECURITY.md](SECURITY.md) for reporting guidance.
+
+## Contact
+
+EN-CO OHG
+
+Handwerkerzone West 3
+
+I-39040 Ratschings/Gasteig
+
+Italy
+
+Website: [energy-control.it/en-co](https://www.energy-control.it/en-co/)
+
+Email: [en-co@energy-control.it](mailto:en-co@energy-control.it)
