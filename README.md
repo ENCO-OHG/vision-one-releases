@@ -40,6 +40,18 @@ Third-party components included in installer packages remain subject to their ow
 
 Do not report security vulnerabilities through public GitHub issues, pull requests, or release comments. See [SECURITY.md](SECURITY.md) for reporting guidance.
 
+## Contact
+
 <a href="https://www.energy-control.it/en-co/">
-  <img src="assets/en-co-contact-card.svg" alt="EN-CO OHG contact information">
+  <img align="right" src="assets/en-co-logo.png" alt="EN-CO OHG" width="320">
 </a>
+
+<strong>EN-CO OHG</strong><br>
+Handwerkerzone West 3<br>
+I-39040 Ratschings/Gasteig, Italy<br>
+T +39 0472 738200<br>
+F +39 0472 738249<br>
+VAT/Tax No. IT00765680210<br>
+<a href="mailto:en-co@energy-control.it">en-co@energy-control.it</a>
+
+<br clear="right">
