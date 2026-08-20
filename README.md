@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/vision-one-icon.png" alt="Vision One" width="96" height="96">
+</p>
+
 # Vision One Installer Releases
 
 This repository provides the official public Windows installer downloads for Vision One, a software product by EN-CO OHG.
@@ -38,14 +42,20 @@ Do not report security vulnerabilities through public GitHub issues, pull reques
 
 ## Contact
 
-EN-CO OHG
-
-Handwerkerzone West 3
-
-I-39040 Ratschings/Gasteig
-
-Italy
-
-Website: [energy-control.it/en-co](https://www.energy-control.it/en-co/)
-
-Email: [en-co@energy-control.it](mailto:en-co@energy-control.it)
+<table>
+  <tr>
+    <td width="220" valign="top">
+      <a href="https://www.energy-control.it/en-co/">
+        <img src="assets/en-co-logo.png" alt="EN-CO OHG" width="180">
+      </a>
+    </td>
+    <td valign="top">
+      <strong>EN-CO OHG</strong><br>
+      Handwerkerzone West 3<br>
+      I-39040 Ratschings/Gasteig<br>
+      Italy<br><br>
+      Website: <a href="https://www.energy-control.it/en-co/">energy-control.it/en-co</a><br>
+      Email: <a href="mailto:en-co@energy-control.it">en-co@energy-control.it</a>
+    </td>
+  </tr>
+</table>
