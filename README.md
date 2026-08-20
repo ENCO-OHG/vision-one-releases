@@ -42,20 +42,15 @@ Do not report security vulnerabilities through public GitHub issues, pull reques
 
 ## Contact
 
-<table>
-  <tr>
-    <td width="220" valign="top">
-      <a href="https://www.energy-control.it/en-co/">
-        <img src="assets/en-co-logo.png" alt="EN-CO OHG" width="180">
-      </a>
-    </td>
-    <td valign="top">
-      <strong>EN-CO OHG</strong><br>
-      Handwerkerzone West 3<br>
-      I-39040 Ratschings/Gasteig<br>
-      Italy<br><br>
-      Website: <a href="https://www.energy-control.it/en-co/">energy-control.it/en-co</a><br>
-      Email: <a href="mailto:en-co@energy-control.it">en-co@energy-control.it</a>
-    </td>
-  </tr>
-</table>
+<p>
+  <a href="https://www.energy-control.it/en-co/">
+    <img src="assets/en-co-logo.png" alt="EN-CO OHG" width="220">
+  </a>
+</p>
+
+<strong>EN-CO OHG</strong><br>
+Handwerkerzone West 3<br>
+I-39040 Ratschings/Gasteig, Italy
+
+Website: <a href="https://www.energy-control.it/en-co/">energy-control.it/en-co</a><br>
+Email: <a href="mailto:en-co@energy-control.it">en-co@energy-control.it</a>
