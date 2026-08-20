@@ -43,7 +43,7 @@ Do not report security vulnerabilities through public GitHub issues, pull reques
 ## Contact
 
 <a href="https://www.energy-control.it/en-co/">
-  <img align="left" src="assets/en-co-logo.png" alt="EN-CO OHG" width="300">
+  <img align="left" src="assets/en-co-contact-logo.png" alt="EN-CO OHG" width="300">
 </a>
 
 <strong>EN-CO OHG</strong><br>
