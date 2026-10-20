@@ -1,0 +1,62 @@
+name: Publish Product Security Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - security/**
+      - scripts/**
+      - test/**
+      - package.json
+      - .github/workflows/security-pages.yml
+      - assets/**
+  pull_request:
+    paths:
+      - security/**
+      - scripts/**
+      - test/**
+      - package.json
+      - .github/workflows/security-pages.yml
+      - assets/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.15.0
+      - name: Validate advisories and test site generation
+        run: npm test
+      - name: Build static website and Atom feed
+        run: npm run build
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check Pages configuration
+        uses: actions/configure-pages@v5
+      - name: Deploy security website
+        id: deployment
+        uses: actions/deploy-pages@v4
