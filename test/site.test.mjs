@@ -95,7 +95,9 @@ test('the complete empty site includes reporting, feed, privacy and public asset
   assert.match(html, /privacy statement/);
   assert.match(archive, /Security advisory archive/);
   assert.doesNotMatch(html, /<script\b|<iframe\b|<form\b/);
-  for (const asset of ['site.css', 'assets/vision-one-icon.png', 'advisories.atom', 'sitemap.xml', 'robots.txt', '.nojekyll']) {
+  assert.match(html, /rel="icon" type="image\/svg\+xml"/);
+  assert.match(html, /<img src="[^"]*\/assets\/vision-one-logo\.svg"/);
+  for (const asset of ['site.css', 'assets/vision-one-logo.svg', 'advisories.atom', 'sitemap.xml', 'robots.txt', '.nojekyll']) {
     await access(path.join(output, asset));
   }
   for (const page of [html, archive]) {
@@ -124,7 +126,7 @@ test('assessed entries generate escaped detail pages and consistent archive/feed
   await writeFile(path.join(source, 'security/site.json'), JSON.stringify(config));
   await writeFile(path.join(source, 'security/advisories.json'), JSON.stringify([first, newest]));
   await copyFile(path.join(root, 'security/site.css'), path.join(source, 'security/site.css'));
-  await copyFile(path.join(root, 'assets/vision-one-icon.png'), path.join(source, 'assets/vision-one-icon.png'));
+  await copyFile(path.join(root, 'assets/vision-one-logo.svg'), path.join(source, 'assets/vision-one-logo.svg'));
   await buildSite({ source, output });
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-001/index.html'), 'utf8');
   assert.match(detail, /&lt;unsafe&gt; &amp; &quot;quoted&quot;/);
