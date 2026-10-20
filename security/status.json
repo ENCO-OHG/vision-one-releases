@@ -1,0 +1,13 @@
+{
+  "reviewedAt": "2026-10-20T13:23:33Z",
+  "productVersion": "27.2.2",
+  "checks": [
+    { "component": "Server", "scope": "Production and development npm dependencies", "entries": 1, "assessment": "One high-severity upstream node-forge finding; product applicability is tracked in VO-SA-2026-001." },
+    { "component": "Client", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
+    { "component": "Client worker", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
+    { "component": "Shared", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
+    { "component": "Manual build", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
+    { "component": "Electron application", "scope": "Production npm dependencies only (--omit=dev)", "entries": 0, "assessment": "No findings reported by this npm audit. This is not an audit of Electron/Chromium binaries or all packaged components." },
+    { "component": "Electron build tooling", "scope": "Complete application npm dependency tree", "entries": 8, "assessment": "Eight moderate package entries trace to one sprintf-js advisory, CVE-2026-97058 / GHSA-hp3w-g68c-fv3c. These are not eight independent vulnerabilities or eight demonstrated runtime exposures." }
+  ]
+}

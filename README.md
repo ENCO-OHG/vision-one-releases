@@ -41,6 +41,8 @@ Third-party components included in installer packages remain subject to their ow
 Visit **[Vision One Product Security](https://enco-ohg.github.io/vision-one-releases/)** for advisories, reporting guidance and update information.
 
 - [Security advisory archive](https://enco-ohg.github.io/vision-one-releases/advisories/)
+- [Dated security status and review scope](https://enco-ohg.github.io/vision-one-releases/security-status/)
+- [Secure deployment guidance](https://enco-ohg.github.io/vision-one-releases/deployment/)
 - [Subscribe to new and revised advisories (Atom)](https://enco-ohg.github.io/vision-one-releases/advisories.atom)
 - Confidential reports: **[admin@energy-control.it](mailto:admin@energy-control.it)**
 

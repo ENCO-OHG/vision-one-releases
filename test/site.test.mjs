@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { atom, buildSite, escape, validate } from '../scripts/build-site.mjs';
+import { atom, buildSite, escape, validate, validateStatus } from '../scripts/build-site.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const config = JSON.parse(await readFile(path.join(root, 'security/site.json'), 'utf8'));
@@ -30,6 +30,7 @@ async function fixtureSite(t, advisories, cssSuffix = '') {
   await mkdir(path.join(source, 'assets'), { recursive: true });
   await writeFile(path.join(source, 'security/site.json'), JSON.stringify(config));
   await writeFile(path.join(source, 'security/advisories.json'), JSON.stringify(advisories));
+  await copyFile(path.join(root, 'security/status.json'), path.join(source, 'security/status.json'));
   await copyFile(path.join(root, 'security/site.css'), path.join(source, 'security/site.css'));
   if (cssSuffix) {
     const cssPath = path.join(source, 'security/site.css');
@@ -76,6 +77,16 @@ test('version applicability, severity, status, CVE and scores require explicit v
     assert.throws(() => validate(config, [{ ...example(), ...patch }]));
   }
   assert.doesNotThrow(() => validate(config, [{ ...example(), cvss: 7.5 }]));
+  assert.doesNotThrow(() => validate(config, [{ ...example(), severity: 'not-rated' }]));
+});
+
+test('review snapshots require a valid date and nonnegative audit-entry counts', () => {
+  const review = { reviewedAt: '2026-10-20T13:23:33Z', productVersion: '27.2.2', checks: [{ component: 'Test', scope: 'npm only', entries: 0, assessment: 'Scoped result' }] };
+  assert.doesNotThrow(() => validateStatus(review));
+  assert.throws(() => validateStatus({ ...review, reviewedAt: 'invalid' }));
+  assert.throws(() => validateStatus({ ...review, checks: [] }));
+  assert.throws(() => validateStatus({ ...review, checks: [{ ...review.checks[0], entries: -1 }] }));
+  assert.throws(() => validateStatus({ ...review, checks: [{ ...review.checks[0], entries: 1.5 }] }));
 });
 
 test('rating sources and assessment paragraphs cannot contain arbitrary structures', () => {
@@ -183,10 +194,90 @@ test('CSS content changes invalidate cached stylesheets consistently across all 
   const changedName = await stylesheetIn(changed);
   assert.ok(changedName);
   assert.notEqual(changedName, originalName);
-  for (const relative of ['index.html', 'advisories/index.html', 'advisories/VO-SA-2026-001/index.html']) {
+  for (const relative of ['index.html', 'advisories/index.html', 'advisories/VO-SA-2026-001/index.html', 'security-status/index.html', 'deployment/index.html']) {
     assert.equal(await stylesheetIn(changed, relative), changedName);
   }
   assert.match(await readFile(path.join(changed, changedName), 'utf8'), /New layout revision/);
+});
+
+test('the SMTP notice gives a scoped configuration procedure without inventing a fix or score', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-smtp-notice-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories } = await buildSite({ output });
+  const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-002');
+  assert.ok(notice);
+  assert.equal(notice.severity, 'not-rated');
+  assert.equal(notice.cvss, undefined);
+  assert.equal(notice.status, 'open');
+  assert.deepEqual(notice.cves, []);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2']);
+  assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
+  const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-002/index.html'), 'utf8');
+  assert.match(detail, /Not rated/);
+  assert.match(detail, /No fixed version listed/);
+  assert.match(detail, /does not itself require an encrypted connection or prevent STARTTLS downgrade/);
+  assert.match(detail, /lacking the explicit-choice marker/);
+  assert.match(detail, /Settings &gt; Mail and enable TLS certificate verification/);
+  assert.match(detail, /global technical-diagnostics setting, not a one-off test address/);
+  assert.match(detail, /restore the intended configuration/);
+  assert.match(detail, /do not validate a customer&#39;s relay/);
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  assert.match(feed, /VO-SA-2026-002/);
+  assert.match(feed, /term="not-rated" label="Not rated"/);
+});
+
+test('security status separates the dated npm snapshot, open notices and build-tool scope', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-status-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { review } = await buildSite({ output });
+  const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
+  assert.match(page, /<h1>Security status<\/h1>/);
+  assert.ok(page.includes(`datetime="${review.reviewedAt}"`));
+  assert.ok(page.includes(escape(review.productVersion)));
+  assert.match(page, /VO-SA-2026-001/);
+  assert.match(page, /VO-SA-2026-002/);
+  assert.match(page, /eight moderate npm package entries for this one upstream advisory/);
+  assert.match(page, /does not prove that every packaged file is unaffected/);
+  assert.match(page, /not a live vulnerability monitor/);
+  assert.match(page, /not a comprehensive code audit/);
+  assert.match(page, /native libraries/);
+  assert.equal(review.checks.find((check) => check.component === 'Electron build tooling').entries, 8);
+  for (const check of review.checks) {
+    assert.ok(page.includes(escape(check.scope)));
+    assert.ok(page.includes(escape(check.assessment)));
+  }
+  const emptyStatusOutput = await fixtureSite(t, []);
+  const emptyStatus = await readFile(path.join(emptyStatusOutput, 'security-status/index.html'), 'utf8');
+  assert.match(emptyStatus, /No open or mitigated notices are listed/);
+  assert.doesNotMatch(emptyStatus, /No product advisories published yet/);
+});
+
+test('deployment guidance and every generated page use working internal links', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-deployment-guidance-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories } = await buildSite({ output });
+  const deployment = await readFile(path.join(output, 'deployment/index.html'), 'utf8');
+  assert.match(deployment, /<h1>Secure deployment guidance<\/h1>/);
+  assert.match(deployment, /selected operating data are intentionally readable without login/);
+  assert.match(deployment, /Vision One Operators/);
+  assert.match(deployment, /does not itself require TLS/);
+  assert.match(deployment, /does not itself verify the downloaded file/);
+  assert.match(deployment, /databases and WALs/);
+  const pages = ['index.html', 'advisories/index.html', 'security-status/index.html', 'deployment/index.html', ...advisories.map((advisory) => `advisories/${advisory.id}/index.html`)];
+  for (const relative of pages) {
+    const html = await readFile(path.join(output, relative), 'utf8');
+    for (const [, href] of html.matchAll(/href="([^"]+)"/g)) {
+      const link = new URL(href, new URL(relative, config.baseUrl));
+      if (!link.href.startsWith(config.baseUrl)) continue;
+      const file = link.pathname.slice(new URL(config.baseUrl).pathname.length);
+      const target = path.join(output, !file || file.endsWith('/') ? `${file}index.html` : file);
+      await access(target);
+      if (link.hash) assert.ok((await readFile(target, 'utf8')).includes(`id="${link.hash.slice(1)}"`));
+    }
+  }
+  const sitemap = await readFile(path.join(output, 'sitemap.xml'), 'utf8');
+  assert.match(sitemap, /security-status\//);
+  assert.match(sitemap, /deployment\//);
 });
 
 test('assessed entries generate escaped detail pages and consistent archive/feed ordering', async (t) => {

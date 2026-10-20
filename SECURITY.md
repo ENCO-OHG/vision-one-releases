@@ -14,6 +14,8 @@ The [Vision One Product Security website](https://enco-ohg.github.io/vision-one-
 
 An empty archive is not evidence that the product or its dependencies are vulnerability-free. Release security audits and product-specific advisories serve different purposes; dependency findings require product-applicability assessment.
 
+The [security status](https://enco-ohg.github.io/vision-one-releases/security-status/) records the date and scope of the latest published review snapshot, including build-tool findings separately from runtime assessments. It is not a live scanner or a certification. [Secure deployment guidance](https://enco-ohg.github.io/vision-one-releases/deployment/) covers network exposure, operating-system permissions, certificate/mail configuration and controlled updates.
+
 ## Handling and Disclosure
 
 EN-CO OHG reviews reports, assesses affected versions and product applicability, and coordinates remediation and disclosure with the reporter and relevant parties as appropriate. Validated issues requiring customer action can be published as dated product advisories with remediation or mitigation guidance. Changes retain the advisory identity and update its revision timestamp so feed readers can detect revisions. No fixed response or remediation SLA is promised by this policy.

@@ -22,7 +22,7 @@ Required fields:
 | `id` | Stable identifier matching `VO-SA-YYYY-NNN` (at least three sequence digits). |
 | `title`, `summary` | Public title and concise product-specific summary. |
 | `published`, `updated` | Full UTC timestamps; revision cannot predate publication. |
-| `severity` | `critical`, `high`, `medium`, `low` or `informational`, based on the assessment. |
+| `severity` | `critical`, `high`, `medium`, `low`, `informational` or `not-rated`. Use `not-rated` when no severity assessment has been established, rather than inventing a rating. |
 | `status` | `open`, `mitigated` or `resolved`. Resolution does not remove the advisory. |
 | `affected` | Nonempty array of product/version/action records, described below. |
 | `impact`, `remediation` | Assessed impact and concrete customer action in plain text. |
@@ -41,6 +41,16 @@ Optional `reviewedVersions` is a nonempty array of distinct version labels. It d
 All strings are rendered as text, not Markdown or HTML. Only HTTPS reference URLs without embedded credentials are accepted. Per-advisory pages and the Atom feed are generated from this single source to avoid divergent copies.
 
 ## Deployment and privacy
+
+### Maintaining the review snapshot
+
+`status.json` provides the dated review snapshot at `/security-status/`. It records the reviewed product version and scoped npm audit package-entry counts. The page derives its open-notice list from the advisory records; it does not treat a dependency count as a product exploit count. `/deployment/` provides baseline operating guidance and is not an exhaustive security checklist.
+
+For each product release, recheck the open notices against that release's manifests and relevant source paths. Run the documented audits for the reviewed checkout before updating `reviewedAt`, `productVersion` or counts. Keep build-tool findings distinct from production npm findings, explain duplicated dependency-chain entries, and record the limits of native-component and application-code coverage. Do not advance the review date automatically during a website build. A website content change does not alter a previously attached release audit or close an advisory.
+
+If a review changes an advisory's scope, impact or remedy, retain its ID and original publication date, update its revision timestamp, and document the material revision. The Atom feed then exposes the revised entry. Updating a product version alone never establishes that an open finding has been fixed. Do not upload raw audit evidence containing private paths, credentials or customer data.
+
+### Hosting
 
 Pages must be configured to use **GitHub Actions**. Pushes to `main` and manual workflow dispatches deploy after tests; pull requests build but cannot deploy. The workflow only needs content-read access for the build and Pages/OIDC permissions for deployment. Deployment is serialized.
 

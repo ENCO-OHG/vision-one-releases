@@ -1,5 +1,45 @@
 [
   {
+    "id": "VO-SA-2026-002",
+    "title": "SMTP certificate verification is disabled by default",
+    "published": "2026-10-20T13:23:33Z",
+    "updated": "2026-10-20T13:23:33Z",
+    "severity": "not-rated",
+    "status": "open",
+    "reviewedVersions": ["27.2.0", "27.2.1", "27.2.2"],
+    "summary": "In the reviewed Vision One releases, SMTP TLS certificate verification is disabled by default for compatibility. Deployments using that setting do not validate the mail server certificate when a TLS connection is negotiated. An explicit verification option is available, but it must be commissioned with a trusted, hostname-matching certificate and a verified mail transport. This notice does not assign a CVE or CVSS score.",
+    "affected": [
+      {
+        "product": "Vision One outbound SMTP mail (alerting, diagnostics and reports)",
+        "versions": "27.2.0, 27.2.1 and 27.2.2 were reviewed. The default and legacy-settings normalization can disable SMTP certificate verification. Installations with an explicitly enabled and persisted verification choice do not have that disabled-verification configuration, but still require appropriate TLS transport policy. Earlier releases and prereleases are outside this review and must not be assumed unaffected.",
+        "fixedVersions": [],
+        "action": "Review Settings > Mail > TLS certificate verification, commission valid SMTP certificate trust, enable the option and verify mail delivery and actual TLS use. Upgrading to 27.2.2 alone does not enable verification or enforce TLS."
+      }
+    ],
+    "impact": "When SMTP TLS certificate verification is disabled, the runtime accepts a presented mail-server certificate without the normal trust and hostname validation. An attacker able to intercept or redirect the SMTP connection may impersonate the mail server and obtain SMTP credentials or operational email content. This describes the security consequence of the configuration; it is not a claim that an attack or credential compromise has occurred. No CVE is assigned by this notice and no product-specific CVSS score has been established. Severity is therefore displayed as Not rated rather than as an invented numerical or categorical assessment.",
+    "assessment": [
+      "The reviewed release source for 27.2.0, 27.2.1 and 27.2.2 sets the SMTP TLS rejectUnauthorized option to false by default. Legacy or imported settings lacking the explicit-choice marker are normalized to false, even if an unmarked legacy verification value was true. Invalid verification values also fall back to false. An upgrade must therefore not be treated as evidence that an earlier verification choice remains active; inspect the effective setting.",
+      "The supported Mail settings toggle writes both the verification choice and its explicit-choice marker. The server passes the effective SMTP transport settings to Nodemailer. Targeted tests confirmed UI persistence, legacy normalization, persistence after restart and credential-redacted transport error handling. These tests use isolated configuration and mocked mail transport; they do not validate a customer's relay or constitute a network penetration test.",
+      "The TLS certificate verification setting checks certificates only when TLS is used. It does not itself require an encrypted connection or prevent STARTTLS downgrade. The reviewed default uses secure=false, allowing STARTTLS when offered, and the reviewed Mail UI does not expose a separate TLS-required control. A successful test email alone is not proof that TLS was negotiated or certificate verification occurred. Transport policy and actual TLS use require installation-specific verification with the mail administrator.",
+      "This is an SMTP configuration notice, separate from the node-forge assessment in VO-SA-2026-001. It does not change the HTTPS or Project Replication certificate policy. No release removing the compatibility default is identified here; the notice remains open."
+    ],
+    "remediation": "Use the existing TLS certificate verification option where SMTP has been commissioned with the correct hostname and a certificate chain trusted by the runtime's TLS stack. Prepare and test the change under the site's maintenance procedure because certificate errors can interrupt alarm, diagnostic and report delivery. Configuration hardening is available in the reviewed releases, but it is not a shipped change to the default and does not, on its own, enforce TLS. Contact EN-CO OHG for a support-approved TLS-required transport configuration where this is required; do not improvise edits to packaged runtime files or disable other certificate checks.",
+    "workarounds": [
+      "Before changing the setting, arrange an approved maintenance window and an alternative alarm-notification path. Confirm the configured SMTP hostname, certificate validity and hostname coverage, and trust of the complete certificate chain by the Vision One runtime. A certificate being trusted by a browser is not sufficient evidence of runtime trust.",
+      "Using an authorized administrative account, open Settings > Mail and enable TLS certificate verification. Use the supported UI so the explicit-choice marker is saved. Confirm the save succeeds, reopen the page to verify the setting, and check it again after the next planned runtime restart. Do not manually edit the migration marker.",
+      "Use the approved Diagnostic email recipient and Send test email action in Settings > Mail. This recipient is a global technical-diagnostics setting, not a one-off test address; if it is changed temporarily, restore the intended configuration, including an empty value if diagnostics were disabled. Verify receipt and then test required alarm/report workflows under the site procedure.",
+      "Have the mail administrator verify actual TLS negotiation and certificate-validation behavior using appropriate relay and runtime diagnostics. Require an approved TLS-required transport solution where applicable; enabling certificate verification alone does not provide that guarantee.",
+      "If certificate validation fails, correct the hostname, certificate or trust configuration before repeating the test. Do not use permanent disabling of verification as the remedy. Keep the alternative notification path active until the required workflows are verified.",
+      "Restrict mail-server connectivity and administrative access to approved networks and accounts. These are defense-in-depth controls, not a complete substitute for authenticated, TLS-required mail transport."
+    ],
+    "references": [
+      { "title": "Nodemailer SMTP transport: TLS and certificate options", "url": "https://nodemailer.com/smtp" },
+      { "title": "Node.js TLS: certificate verification and rejectUnauthorized", "url": "https://nodejs.org/api/tls.html" },
+      { "title": "Vision One 27.2.2 release and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.2.2" }
+    ],
+    "cves": []
+  },
+  {
     "id": "VO-SA-2026-001",
     "title": "node-forge RSA signature verification: Vision One applicability assessment",
     "published": "2026-10-20T11:38:04Z",
