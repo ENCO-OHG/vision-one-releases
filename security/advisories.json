@@ -7,6 +7,7 @@
     "severity": "high",
     "severitySource": "upstream",
     "status": "open",
+    "reviewedVersions": ["27.2.0", "27.2.1", "27.2.2"],
     "summary": "Reviewed release manifests for Vision One 27.2.0, 27.2.1 and 27.2.2 include node-forge 1.4.0, which is covered by CVE-2026-85393. The affected verifier is reachable through local CSR handling. Remote exploitability in Vision One has not been established; the assessment remains open. High severity refers to the upstream library advisory, not a separately established Vision One product score.",
     "affected": [
       {

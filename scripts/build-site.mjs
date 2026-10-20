@@ -1,4 +1,5 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -38,6 +39,11 @@ export function validate(config, advisories) {
     for (const field of ['title', 'summary', 'impact', 'remediation']) text(advisory[field], field);
     if (!['critical', 'high', 'medium', 'low', 'informational'].includes(advisory.severity)) throw new Error('Invalid severity');
     if (advisory.severitySource !== undefined && !['upstream', 'product'].includes(advisory.severitySource)) throw new Error('Invalid severity source');
+    if (advisory.reviewedVersions !== undefined) {
+      if (!Array.isArray(advisory.reviewedVersions) || !advisory.reviewedVersions.length) throw new Error('reviewedVersions must be a nonempty version array');
+      advisory.reviewedVersions.forEach((version) => text(version, 'reviewed version'));
+      if (new Set(advisory.reviewedVersions).size !== advisory.reviewedVersions.length) throw new Error('Duplicate reviewed version');
+    }
     if (advisory.assessment !== undefined) {
       if (!Array.isArray(advisory.assessment) || !advisory.assessment.length) throw new Error('assessment must be a nonempty paragraph array');
       advisory.assessment.forEach((paragraph) => text(paragraph, 'assessment paragraph'));
@@ -73,14 +79,14 @@ function layout(config, title, content, relative = '') {
 <title>${escape(title)} · EN-CO OHG</title>
 <meta name="description" content="Official Vision One product security information, security advisories and confidential vulnerability reporting.">
 <meta name="color-scheme" content="light"><link rel="canonical" href="${link(relative)}">
-<link rel="icon" type="image/svg+xml" href="${link('assets/vision-one-logo.svg')}"><link rel="stylesheet" href="${link('site.css')}">
+<link rel="icon" type="image/svg+xml" href="${link('assets/vision-one-logo.svg')}"><link rel="stylesheet" href="${link(config.stylesheet)}">
 <link rel="alternate" type="application/atom+xml" title="Vision One Security Advisories" href="${link('advisories.atom')}"></head>
 <body><a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="header-inner"><a class="brand" href="${link()}"><img src="${link('assets/vision-one-logo.svg')}" width="40" height="36" alt=""><span>Vision One<small>Product Security</small></span></a>
 <nav aria-label="Main navigation"><a href="${link('advisories/')}">Advisories</a><a href="${link('#subscribe')}">Notifications</a><a href="${link('#report')}">Report a vulnerability</a><a href="${escape(config.repository)}/releases">Software releases <span aria-hidden="true">↗</span></a></nav></div></header>
 <main id="main">${content}</main>
 <footer class="site-footer"><div class="footer-inner"><div class="footer-main">
-<div class="footer-brand"><a href="https://www.energy-control.it/en-co/" aria-label="EN-CO OHG company website"><img src="${link('assets/en-co-logo.png')}" width="230" height="71" alt="EN-CO OHG"></a><p>Vision One Product Security</p><a class="footer-company-link" href="https://www.energy-control.it/en-co/">Company website <span aria-hidden="true">↗</span></a></div>
+<div class="footer-brand"><a href="https://www.energy-control.it/en-co/" aria-label="EN-CO OHG company website"><img src="${link('assets/en-co-logo.png')}" width="230" height="71" alt="EN-CO OHG"></a><a class="footer-company-link" href="https://www.energy-control.it/en-co/">Company website <span aria-hidden="true">↗</span></a></div>
 <div class="footer-contact"><h2 class="footer-heading">EN-CO OHG</h2><address>Handwerkerzone West 3<br>I-39040 Ratschings/Gasteig, Italy</address><p class="footer-contact-lines"><span>T <a href="tel:+390472738200">+39 0472 738200</a></span><span>F +39 0472 738249</span><span>VAT/Tax No. IT00765680210</span><a href="mailto:en-co@energy-control.it">en-co@energy-control.it</a></p></div>
 <div class="footer-resources"><h2 class="footer-heading">Security resources</h2><nav class="footer-navigation" aria-label="Footer navigation"><a href="${link('advisories/')}">Security advisories</a><a href="${link('advisories.atom')}">Advisory feed</a><a href="${escape(config.repository)}/releases">Installer releases</a><a href="${escape(config.repository)}/blob/main/SECURITY.md">Security policy</a><a href="${escape(config.repository)}">GitHub repository</a></nav><p class="footer-security-contact">Security reports<br><a href="mailto:${escape(config.contact)}">${escape(config.contact)}</a></p></div>
 </div><div class="footer-bottom"><p class="fine-print">Hosted on GitHub Pages. No analytics, advertising scripts or third-party fonts are used by this site. GitHub may process connection data under its <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">privacy statement</a>.</p><p class="footer-copyright">© ${escape(config.reviewed.slice(0, 4))} EN-CO OHG<br><a href="${escape(config.repository)}/blob/main/LICENSE">License &amp; terms</a></p></div></div></footer></body></html>`;
@@ -88,12 +94,12 @@ function layout(config, title, content, relative = '') {
 
 function advisoryTable(config, advisories) {
   if (!advisories.length) return `<div class="empty-state"><span class="empty-mark" aria-hidden="true">i</span><div><h3>No product advisories published yet</h3><p>This archive has not yet published a product-specific advisory. An empty archive does not mean that Vision One or its dependencies are free of vulnerabilities. Release security audits may document additional known risks.</p></div></div>`;
-  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Security advisories"><table><thead><tr><th>Advisory</th><th>Severity</th><th>Status</th><th>Updated (UTC)</th></tr></thead><tbody>${advisories.map((advisory) => `<tr><td><a href="${escape(url(config, advisoryPath(advisory)))}"><small>${escape(advisory.id)}</small>${escape(advisory.title)}</a></td><td><span class="severity ${advisory.severity}">${escape(severityLabel(advisory))}</span></td><td>${escape(advisory.status)}</td><td><time datetime="${advisory.updated}">${date(advisory.updated)}</time></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Security advisories"><table><thead><tr><th>Advisory</th><th>Severity</th><th>Status</th><th>Updated (UTC)</th></tr></thead><tbody>${advisories.map((advisory) => `<tr><td><a href="${escape(url(config, advisoryPath(advisory)))}"><small>${escape(advisory.id)}</small>${escape(advisory.title)}</a>${advisory.reviewedVersions ? `<p class="advisory-versions"><strong>Reviewed versions:</strong> ${advisory.reviewedVersions.map(escape).join(' · ')}</p>` : ''}</td><td><span class="severity ${advisory.severity}">${escape(severityLabel(advisory))}</span></td><td>${escape(advisory.status)}</td><td><time datetime="${advisory.updated}">${date(advisory.updated)}</time></td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function home(config, advisories) {
   return layout(config, config.title, `
-<section class="hero"><div class="hero-inner"><h1>Vision One Product Security</h1><p class="hero-lead">Security advisories, affected product versions and recommended actions for Vision One.</p><div class="actions"><a class="button primary" href="#advisories">View advisories</a><a class="button secondary" href="#report">Report a vulnerability</a></div></div></section>
+<section class="hero"><div class="hero-inner"><h1>Vision One Product Security</h1><p class="hero-lead">EN-CO OHG provides security information for Vision One to support the assessment and management of product-related risks. Published advisories describe affected or reviewed versions, available mitigations and recommended actions. This page also provides information on security updates and a confidential channel for reporting suspected vulnerabilities.</p><div class="actions"><a class="button primary" href="#advisories">View advisories</a><a class="button secondary" href="#report">Report a vulnerability</a></div></div></section>
 <div class="content"><section id="advisories"><div class="section-heading"><h2>Security advisories</h2><a class="text-link" href="${escape(url(config, 'advisories/'))}">All advisories →</a></div><p>Current assessments and recommended actions, ordered by latest revision. Each advisory identifies its review scope and distinguishes upstream ratings from product-specific findings.</p>${advisoryTable(config, advisories.slice(0, 5))}</section>
 <section id="subscribe" class="subscribe-panel"><div><h2>Advisory notifications</h2><p>Subscribe to the Atom feed for new advisories and revisions to existing notices.</p><a class="button primary" href="${escape(url(config, 'advisories.atom'))}">Subscribe via Atom</a><p class="feed-address"><code>${escape(url(config, 'advisories.atom'))}</code></p></div><div class="subscribe-details"><h3>Other notification options</h3><p>GitHub users can watch <a href="${escape(config.repository)}">the release repository</a>. GitHub release notifications announce software releases, not every advisory revision.</p><p><strong>Email subscription:</strong> not currently offered.</p></div></section>
 <section id="report"><h2>Report a vulnerability</h2><p>Report suspected security issues privately to EN-CO OHG. Do not submit vulnerability details through public issues, pull requests or release comments.</p><a class="contact-link" href="mailto:${escape(config.contact)}?subject=Vision%20One%20security%20report">${escape(config.contact)}</a><div class="two-column"><div><h3>Information to include</h3>${list(['Vision One version and affected component', 'Installation and network context', 'Reproduction steps and observed impact', 'Known mitigations or relevant references', 'Contact details for follow-up'])}</div><div class="notice"><h3>Submitting sensitive information</h3><p>Exclude credentials, private keys, customer project files and unredacted production data from the initial report. Ordinary email is not end-to-end encrypted. No PGP reporting key is currently published; request an agreed secure transfer method before sending sensitive evidence.</p></div></div></section>
@@ -129,25 +135,28 @@ export async function buildSite({ source = root, output = path.join(root, 'dist'
   const config = JSON.parse(await readFile(path.join(source, 'security/site.json'), 'utf8'));
   const advisories = JSON.parse(await readFile(path.join(source, 'security/advisories.json'), 'utf8'));
   validate(config, advisories);
+  const css = await readFile(path.join(source, 'security/site.css'));
+  const stylesheet = `site.${createHash('sha256').update(css).digest('hex').slice(0, 12)}.css`;
+  const pageConfig = { ...config, stylesheet };
   advisories.sort((a, b) => b.updated.localeCompare(a.updated) || a.id.localeCompare(b.id));
   await mkdir(path.join(output, 'advisories'), { recursive: true });
   await mkdir(path.join(output, 'assets'), { recursive: true });
-  await writeFile(path.join(output, 'index.html'), home(config, advisories));
-  await writeFile(path.join(output, 'advisories/index.html'), layout(config, 'Security advisory archive', `<div class="content archive"><p class="eyebrow">Vision One Product Security</p><h1>Security advisory archive</h1><p>All published product advisories, newest revision first. Each entry lists publication and revision dates in UTC.</p>${advisoryTable(config, advisories)}<p><a class="text-link" href="${escape(url(config, 'advisories.atom'))}">Subscribe to the Atom feed →</a></p></div>`, 'advisories/'));
+  await writeFile(path.join(output, 'index.html'), home(pageConfig, advisories));
+  await writeFile(path.join(output, 'advisories/index.html'), layout(pageConfig, 'Security advisory archive', `<div class="content archive"><p class="eyebrow">Vision One Product Security</p><h1>Security advisory archive</h1><p>All published product advisories, newest revision first. Each entry lists publication and revision dates in UTC.</p>${advisoryTable(config, advisories)}<p><a class="text-link" href="${escape(url(config, 'advisories.atom'))}">Subscribe to the Atom feed →</a></p></div>`, 'advisories/'));
   for (const advisory of advisories) {
     const dir = path.join(output, advisoryPath(advisory));
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, 'index.html'), detail(config, advisory));
+    await writeFile(path.join(dir, 'index.html'), detail(pageConfig, advisory));
   }
   await writeFile(path.join(output, 'advisories.atom'), atom(config, advisories));
-  await copyFile(path.join(source, 'security/site.css'), path.join(output, 'site.css'));
+  await writeFile(path.join(output, stylesheet), css);
   await copyFile(path.join(source, 'assets/vision-one-logo.svg'), path.join(output, 'assets/vision-one-logo.svg'));
   await copyFile(path.join(source, 'assets/en-co-logo.png'), path.join(output, 'assets/en-co-logo.png'));
   await writeFile(path.join(output, '.nojekyll'), '');
   await writeFile(path.join(output, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${url(config, 'sitemap.xml')}\n`);
   const pages = ['', 'advisories/', ...advisories.map(advisoryPath)];
   await writeFile(path.join(output, 'sitemap.xml'), `<?xml version="1.0" encoding="utf-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages.map((relative) => `<url><loc>${escape(url(config, relative))}</loc></url>`).join('')}</urlset>\n`);
-  return { config, advisories };
+  return { config, advisories, stylesheet };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

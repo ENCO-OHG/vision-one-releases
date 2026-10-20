@@ -21,7 +21,7 @@ const example = () => ({
   references: [{ title: 'Official releases', url: `${config.repository}/releases` }], cves: [],
 });
 
-async function fixtureSite(t, advisories) {
+async function fixtureSite(t, advisories, cssSuffix = '') {
   const workspace = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-site-'));
   t.after(() => rm(workspace, { recursive: true, force: true }));
   const source = path.join(workspace, 'source');
@@ -31,6 +31,10 @@ async function fixtureSite(t, advisories) {
   await writeFile(path.join(source, 'security/site.json'), JSON.stringify(config));
   await writeFile(path.join(source, 'security/advisories.json'), JSON.stringify(advisories));
   await copyFile(path.join(root, 'security/site.css'), path.join(source, 'security/site.css'));
+  if (cssSuffix) {
+    const cssPath = path.join(source, 'security/site.css');
+    await writeFile(cssPath, (await readFile(cssPath, 'utf8')) + cssSuffix);
+  }
   await copyFile(path.join(root, 'assets/vision-one-logo.svg'), path.join(source, 'assets/vision-one-logo.svg'));
   await copyFile(path.join(root, 'assets/en-co-logo.png'), path.join(source, 'assets/en-co-logo.png'));
   await buildSite({ source, output });
@@ -81,6 +85,13 @@ test('rating sources and assessment paragraphs cannot contain arbitrary structur
   assert.doesNotThrow(() => validate(config, [{ ...example(), severitySource: 'upstream', assessment: ['Reviewed scope'] }]));
 });
 
+test('reviewed versions require explicit nonempty distinct labels', () => {
+  for (const reviewedVersions of ['27.2.2', [], [''], [null], ['27.2.2', '27.2.2']]) {
+    assert.throws(() => validate(config, [{ ...example(), reviewedVersions }]));
+  }
+  assert.doesNotThrow(() => validate(config, [{ ...example(), reviewedVersions: ['27.2.1', '27.2.2'] }]));
+});
+
 test('an empty feed is valid structured Atom without invented entries', () => {
   const xml = atom(config, []);
   assert.match(xml, /^<\?xml version="1.0"/);
@@ -124,6 +135,13 @@ test('the complete empty site includes reporting, feed, privacy and public asset
   assert.match(html, /aria-label="Footer navigation"/);
   assert.doesNotMatch(html, /Support and scope|This describes the intended handling process/);
   assert.match(html, /<h1>Vision One Product Security<\/h1>/);
+  assert.match(html, /EN-CO OHG provides security information for Vision One to support the assessment and management of product-related risks/);
+  assert.match(html, /a confidential channel for reporting suspected vulnerabilities/);
+  const footerBrand = html.match(/<div class="footer-brand">([\s\S]*?)<\/div>/)?.[1];
+  assert.ok(footerBrand);
+  assert.doesNotMatch(footerBrand, /Vision One Product Security/);
+  assert.match(footerBrand, /assets\/en-co-logo\.png/);
+  assert.match(footerBrand, /Company website/);
   assert.match(html, /<h2>Advisory notifications<\/h2>/);
   assert.match(html, /<h2>Vulnerability disclosure process<\/h2>/);
   assert.match(html, /<h2>Software updates<\/h2>/);
@@ -132,7 +150,9 @@ test('the complete empty site includes reporting, feed, privacy and public asset
   assert.doesNotMatch(html, /<script\b|<iframe\b|<form\b/);
   assert.match(html, /rel="icon" type="image\/svg\+xml"/);
   assert.match(html, /<img src="[^"]*\/assets\/vision-one-logo\.svg"/);
-  for (const asset of ['site.css', 'assets/vision-one-logo.svg', 'assets/en-co-logo.png', 'advisories.atom', 'sitemap.xml', 'robots.txt', '.nojekyll']) {
+  const stylesheet = html.match(/site\.[a-f0-9]{12}\.css/)?.[0];
+  assert.ok(stylesheet, 'The stylesheet must use a content-versioned filename');
+  for (const asset of [stylesheet, 'assets/vision-one-logo.svg', 'assets/en-co-logo.png', 'advisories.atom', 'sitemap.xml', 'robots.txt', '.nojekyll']) {
     await access(path.join(output, asset));
   }
   for (const page of [html, archive]) {
@@ -147,6 +167,26 @@ test('the complete empty site includes reporting, feed, privacy and public asset
       }
     }
   }
+});
+
+test('CSS content changes invalidate cached stylesheets consistently across all pages', async (t) => {
+  const first = await fixtureSite(t, [example()]);
+  const repeated = await fixtureSite(t, [example()]);
+  const changed = await fixtureSite(t, [example()], '\n/* New layout revision */\n');
+  const stylesheetIn = async (output, relative = 'index.html') => {
+    const html = await readFile(path.join(output, relative), 'utf8');
+    return html.match(/site\.[a-f0-9]{12}\.css/)?.[0];
+  };
+  const originalName = await stylesheetIn(first);
+  assert.ok(originalName);
+  assert.equal(await stylesheetIn(repeated), originalName);
+  const changedName = await stylesheetIn(changed);
+  assert.ok(changedName);
+  assert.notEqual(changedName, originalName);
+  for (const relative of ['index.html', 'advisories/index.html', 'advisories/VO-SA-2026-001/index.html']) {
+    assert.equal(await stylesheetIn(changed, relative), changedName);
+  }
+  assert.match(await readFile(path.join(changed, changedName), 'utf8'), /New layout revision/);
 });
 
 test('assessed entries generate escaped detail pages and consistent archive/feed ordering', async (t) => {
@@ -182,6 +222,15 @@ test('upstream severity stays explicitly qualified on every publication surface'
   assert.match(feed, /label="high \(upstream\)"/);
 });
 
+test('reviewed version summaries are escaped and displayed below the linked title', async (t) => {
+  const output = await fixtureSite(t, [{ ...example(), reviewedVersions: ['27.2.1', '<reviewed>'] }]);
+  for (const relative of ['index.html', 'advisories/index.html']) {
+    const html = await readFile(path.join(output, relative), 'utf8');
+    assert.match(html, /<\/a><p class="advisory-versions"><strong>Reviewed versions:<\/strong> 27\.2\.1 · &lt;reviewed&gt;<\/p>/);
+    assert.doesNotMatch(html, /<reviewed>/);
+  }
+});
+
 test('the node-forge notice retains an open assessment and does not invent a fixed version', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-notice-'));
   t.after(() => rm(output, { recursive: true, force: true }));
@@ -190,6 +239,7 @@ test('the node-forge notice retains an open assessment and does not invent a fix
   assert.ok(notice);
   assert.equal(notice.status, 'open');
   assert.equal(notice.severitySource, 'upstream');
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2']);
   assert.deepEqual(notice.cves, ['CVE-2026-85393']);
   assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
   assert.match(notice.affected[0].versions, /27\.2\.0, 27\.2\.1 and 27\.2\.2/);
@@ -218,4 +268,8 @@ test('the node-forge notice retains an open assessment and does not invent a fix
   assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
   assert.match(feed, /VO-SA-2026-001/);
   assert.doesNotMatch(detail, /No product advisories published yet/);
+  for (const relative of ['index.html', 'advisories/index.html']) {
+    const html = await readFile(path.join(output, relative), 'utf8');
+    assert.match(html, /Reviewed versions:<\/strong> 27\.2\.0 · 27\.2\.1 · 27\.2\.2/);
+  }
 });

@@ -71,6 +71,8 @@ th { background: #f0f5f7; color: var(--muted); font-size: .78rem; }
 th, td { padding: 1rem; vertical-align: top; border-bottom: 1px solid var(--line); }
 tbody tr:last-child td { border-bottom: none; }
 td small { display: block; color: var(--muted); font-size: .72rem; margin-bottom: .3rem; }
+.advisory-versions { margin: .45rem 0 0; font-size: .8rem; color: var(--muted); }
+.advisory-versions strong { font-weight: 600; color: var(--ink); }
 td time { white-space: nowrap; }
 .severity { display: inline-block; padding: .2rem .65rem; border-radius: 4px; font-size: .75rem; font-weight: 750; text-transform: uppercase; background: #edf1f4; color: #374956; }
 .severity.critical { background: #ffe0e3; color: #8f1731; }
@@ -92,7 +94,6 @@ td time { white-space: nowrap; }
 .footer-inner { max-width: 1216px; margin: auto; padding: 2rem 2rem 1.2rem; }
 .footer-main { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 2rem; padding-bottom: 1.6rem; }
 .footer-brand img { width: 230px; height: auto; margin-bottom: .75rem; }
-.footer-brand p { margin: 0 0 .65rem; color: var(--muted); }
 .footer-company-link { font-weight: 600; }
 .footer-heading { font-size: .95rem; letter-spacing: 0; margin-bottom: .65rem; }
 .footer-contact address { font-style: normal; color: var(--muted); }

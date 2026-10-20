@@ -36,6 +36,8 @@ Optional `cvss` is a numerical score between 0 and 10. When supplied, identify t
 
 Optional `severitySource` is `product` (the default) or `upstream`. Use `upstream` when reproducing a dependency advisory's rating without a separately established product rating; the archive, detail page and Atom category label explicitly identify that source. Any numerical CVSS score displayed for such an entry is also labelled upstream. Explain the source, version/vector and distinction in the impact text. Optional `assessment` is a nonempty array of plain-text paragraphs for the evidence, review scope, limitations and current product-applicability conclusion. An upstream score and an included dependency do not, on their own, establish product exploitability.
 
+Optional `reviewedVersions` is a nonempty array of distinct version labels. It displays a compact **Reviewed versions** line below the advisory title on the home page and in the archive. Populate it from the actual review scope, not by inferring ranges from prose. It does not declare confirmed product exploitability or imply that unlisted versions are unaffected; the full `affected` and `assessment` text remains authoritative. Adding this presentation metadata without changing the assessment does not, by itself, require a new technical revision timestamp.
+
 All strings are rendered as text, not Markdown or HTML. Only HTTPS reference URLs without embedded credentials are accepted. Per-advisory pages and the Atom feed are generated from this single source to avoid divergent copies.
 
 ## Deployment and privacy
