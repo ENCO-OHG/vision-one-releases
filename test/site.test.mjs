@@ -32,6 +32,7 @@ async function fixtureSite(t, advisories) {
   await writeFile(path.join(source, 'security/advisories.json'), JSON.stringify(advisories));
   await copyFile(path.join(root, 'security/site.css'), path.join(source, 'security/site.css'));
   await copyFile(path.join(root, 'assets/vision-one-logo.svg'), path.join(source, 'assets/vision-one-logo.svg'));
+  await copyFile(path.join(root, 'assets/en-co-logo.png'), path.join(source, 'assets/en-co-logo.png'));
   await buildSite({ source, output });
   return output;
 }
@@ -113,11 +114,25 @@ test('the complete empty site includes reporting, feed, privacy and public asset
   assert.match(html, /No product advisories published yet/);
   assert.match(html, /does not mean.*free of vulnerabilities/);
   assert.match(html, /privacy statement/);
+  assert.match(html, /assets\/en-co-logo\.png/);
+  assert.match(html, /Handwerkerzone West 3/);
+  assert.match(html, /I-39040 Ratschings\/Gasteig, Italy/);
+  assert.match(html, /tel:\+390472738200/);
+  assert.match(html, /F \+39 0472 738249/);
+  assert.match(html, /VAT\/Tax No\. IT00765680210/);
+  assert.match(html, /mailto:en-co@energy-control\.it/);
+  assert.match(html, /aria-label="Footer navigation"/);
+  assert.doesNotMatch(html, /Support and scope|This describes the intended handling process/);
+  assert.match(html, /<h1>Vision One Product Security<\/h1>/);
+  assert.match(html, /<h2>Advisory notifications<\/h2>/);
+  assert.match(html, /<h2>Vulnerability disclosure process<\/h2>/);
+  assert.match(html, /<h2>Software updates<\/h2>/);
+  assert.doesNotMatch(html, /Clear actions|Assess &amp; act|Stay informed|class="shield"|Public information · No account required|No GitHub account is required/);
   assert.match(archive, /Security advisory archive/);
   assert.doesNotMatch(html, /<script\b|<iframe\b|<form\b/);
   assert.match(html, /rel="icon" type="image\/svg\+xml"/);
   assert.match(html, /<img src="[^"]*\/assets\/vision-one-logo\.svg"/);
-  for (const asset of ['site.css', 'assets/vision-one-logo.svg', 'advisories.atom', 'sitemap.xml', 'robots.txt', '.nojekyll']) {
+  for (const asset of ['site.css', 'assets/vision-one-logo.svg', 'assets/en-co-logo.png', 'advisories.atom', 'sitemap.xml', 'robots.txt', '.nojekyll']) {
     await access(path.join(output, asset));
   }
   for (const page of [html, archive]) {
@@ -187,6 +202,18 @@ test('the node-forge notice retains an open assessment and does not invent a fix
   assert.match(detail, /csr.verify\(\)/);
   assert.match(detail, /literal-import scan/);
   assert.match(detail, /not a general security guarantee/);
+  assert.match(detail, /aria-label="On this advisory"/);
+  const sections = ['summary', 'product-status', 'technical-assessment', 'recommended-actions', 'references'];
+  let previous = -1;
+  for (const section of sections) {
+    assert.ok(detail.includes(`href="#${section}"`));
+    const position = detail.indexOf(`<section id="${section}">`);
+    assert.ok(position > previous, `Missing or unordered section ${section}`);
+    previous = position;
+  }
+  for (const paragraph of [notice.summary, notice.impact, notice.remediation, ...notice.assessment, ...notice.workarounds]) {
+    assert.ok(detail.includes(escape(paragraph)), 'The presentation must retain the published technical assessment');
+  }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
   assert.match(feed, /VO-SA-2026-001/);
