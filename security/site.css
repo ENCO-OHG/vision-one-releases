@@ -34,12 +34,13 @@ nav { display: flex; flex-wrap: wrap; gap: .8rem 1.65rem; }
 nav a { color: var(--ink); text-decoration: none; font-size: .88rem; font-weight: 600; }
 nav a:hover { color: var(--teal); text-decoration: underline; }
 .hero { background: var(--navy); color: #fff; padding: 2.8rem max(2rem, calc((100% - 1152px) / 2)); }
-.hero-inner { max-width: 1000px; }
+.hero-inner { width: 100%; }
 .hero h1 { font-size: clamp(2rem, 4.2vw, 3.2rem); }
 .eyebrow { color: var(--teal); text-transform: uppercase; font-size: .74rem; letter-spacing: .13em; font-weight: 750; margin-bottom: .6rem; }
-.hero-lead { color: #d0e2e8; max-width: 760px; font-size: 1.08rem; }
+.hero-lead { color: #d0e2e8; font-size: 1.08rem; }
 .actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.4rem; }
 .button { display: inline-flex; align-items: center; gap: 1.2rem; padding: .85rem 1.25rem; border-radius: 5px; font-weight: 650; text-decoration: none; font-size: .94rem; }
+.actions .button { inline-size: 14rem; max-inline-size: 100%; justify-content: center; }
 .button.primary { background: var(--teal); color: #fff; }
 .hero .button.primary { background: #8ae3d8; color: #102b3a; }
 .button.secondary { border: 1px solid #75939f; color: #fff; }
