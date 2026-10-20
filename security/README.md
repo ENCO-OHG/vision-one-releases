@@ -5,7 +5,7 @@ This directory contains public website configuration, styles and assessed adviso
 ## Publication
 
 1. Assess product applicability and affected versions privately. A dependency advisory is not automatically a Vision One vulnerability. Coordinate disclosure before adding public material.
-2. Add an assessed entry to `advisories.json` using the schema below. The initial empty array intentionally publishes no unassessed or fabricated advisory.
+2. Add an assessed entry to `advisories.json` using the schema below. Publish only supported findings, not fabricated examples. An applicability notice may retain an open assessment if its evidence and uncertainties are explicit.
 3. Use a stable ID such as `VO-SA-YYYY-NNN`. IDs are never reused. Publication and revision timestamps use UTC, for example `2026-10-20T09:00:00Z`.
 4. For a revision, retain the ID and original `published` timestamp, update `updated`, and explain material changes in the advisory text. Keep resolved advisories available instead of silently removing them. The stable Atom entry ID and changed revision timestamp allow feed readers to identify updates; individual notification behavior depends on the reader.
 5. Run `npm test` and `npm run build`. Review affected/fixed versions, links, severity, recommended actions, public wording and generated HTML/Atom before approving the change.
@@ -33,6 +33,8 @@ Required fields:
 Each `affected` entry contains `product`, an explicit human-readable affected `versions` range, `fixedVersions` (an array, empty if no fixed version is available), and `action` (recommended action for that product/range). Version ranges are displayed as assessed text; the website does not infer applicability or perform SemVer comparisons.
 
 Optional `cvss` is a numerical score between 0 and 10. When supplied, identify the CVSS version/vector and scoring rationale in the impact text or an authoritative reference. Do not invent a CVE or score. Review any affected-version interpretation and remediation guidance before publication.
+
+Optional `severitySource` is `product` (the default) or `upstream`. Use `upstream` when reproducing a dependency advisory's rating without a separately established product rating; the archive, detail page and Atom category label explicitly identify that source. Any numerical CVSS score displayed for such an entry is also labelled upstream. Explain the source, version/vector and distinction in the impact text. Optional `assessment` is a nonempty array of plain-text paragraphs for the evidence, review scope, limitations and current product-applicability conclusion. An upstream score and an included dependency do not, on their own, establish product exploitability.
 
 All strings are rendered as text, not Markdown or HTML. Only HTTPS reference URLs without embedded credentials are accepted. Per-advisory pages and the Atom feed are generated from this single source to avoid divergent copies.
 

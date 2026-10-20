@@ -21,6 +21,21 @@ const example = () => ({
   references: [{ title: 'Official releases', url: `${config.repository}/releases` }], cves: [],
 });
 
+async function fixtureSite(t, advisories) {
+  const workspace = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-site-'));
+  t.after(() => rm(workspace, { recursive: true, force: true }));
+  const source = path.join(workspace, 'source');
+  const output = path.join(workspace, 'dist');
+  await mkdir(path.join(source, 'security'), { recursive: true });
+  await mkdir(path.join(source, 'assets'), { recursive: true });
+  await writeFile(path.join(source, 'security/site.json'), JSON.stringify(config));
+  await writeFile(path.join(source, 'security/advisories.json'), JSON.stringify(advisories));
+  await copyFile(path.join(root, 'security/site.css'), path.join(source, 'security/site.css'));
+  await copyFile(path.join(root, 'assets/vision-one-logo.svg'), path.join(source, 'assets/vision-one-logo.svg'));
+  await buildSite({ source, output });
+  return output;
+}
+
 test('the configured public archive validates without publishing fabricated advisories', async () => {
   const advisories = JSON.parse(await readFile(path.join(root, 'security/advisories.json'), 'utf8'));
   assert.doesNotThrow(() => validate(config, advisories));
@@ -58,6 +73,13 @@ test('version applicability, severity, status, CVE and scores require explicit v
   assert.doesNotThrow(() => validate(config, [{ ...example(), cvss: 7.5 }]));
 });
 
+test('rating sources and assessment paragraphs cannot contain arbitrary structures', () => {
+  for (const patch of [{ severitySource: '<script>' }, { assessment: 'not an array' }, { assessment: [] }, { assessment: [''] }, { assessment: [null] }]) {
+    assert.throws(() => validate(config, [{ ...example(), ...patch }]));
+  }
+  assert.doesNotThrow(() => validate(config, [{ ...example(), severitySource: 'upstream', assessment: ['Reviewed scope'] }]));
+});
+
 test('an empty feed is valid structured Atom without invented entries', () => {
   const xml = atom(config, []);
   assert.match(xml, /^<\?xml version="1.0"/);
@@ -80,9 +102,7 @@ test('advisory revisions retain their Atom identity and original publication dat
 });
 
 test('the complete empty site includes reporting, feed, privacy and public asset links', async (t) => {
-  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-site-'));
-  t.after(() => rm(output, { recursive: true, force: true }));
-  await buildSite({ output });
+  const output = await fixtureSite(t, []);
   const html = await readFile(path.join(output, 'index.html'), 'utf8');
   const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
   assert.match(html, /<html lang="en">/);
@@ -115,19 +135,9 @@ test('the complete empty site includes reporting, feed, privacy and public asset
 });
 
 test('assessed entries generate escaped detail pages and consistent archive/feed ordering', async (t) => {
-  const workspace = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-advisory-'));
-  t.after(() => rm(workspace, { recursive: true, force: true }));
-  const source = path.join(workspace, 'source');
-  const output = path.join(workspace, 'dist');
-  await mkdir(path.join(source, 'security'), { recursive: true });
-  await mkdir(path.join(source, 'assets'), { recursive: true });
   const first = example();
   const newest = { ...example(), id: 'VO-SA-2026-002', updated: '2026-10-21T11:00:00Z' };
-  await writeFile(path.join(source, 'security/site.json'), JSON.stringify(config));
-  await writeFile(path.join(source, 'security/advisories.json'), JSON.stringify([first, newest]));
-  await copyFile(path.join(root, 'security/site.css'), path.join(source, 'security/site.css'));
-  await copyFile(path.join(root, 'assets/vision-one-logo.svg'), path.join(source, 'assets/vision-one-logo.svg'));
-  await buildSite({ source, output });
+  const output = await fixtureSite(t, [first, newest]);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-001/index.html'), 'utf8');
   assert.match(detail, /&lt;unsafe&gt; &amp; &quot;quoted&quot;/);
   assert.doesNotMatch(detail, /<unsafe>/);
@@ -140,4 +150,45 @@ test('assessed entries generate escaped detail pages and consistent archive/feed
   for (const document of [archive, feed]) {
     assert.ok(document.indexOf(newest.id) < document.indexOf(first.id));
   }
+});
+
+test('upstream severity stays explicitly qualified on every publication surface', async (t) => {
+  const advisory = { ...example(), severitySource: 'upstream', cvss: 8.7, assessment: ['Scope <unsafe> & limitations'] };
+  const output = await fixtureSite(t, [advisory]);
+  const detail = await readFile(path.join(output, `advisories/${advisory.id}/index.html`), 'utf8');
+  const home = await readFile(path.join(output, 'index.html'), 'utf8');
+  const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  for (const page of [detail, home, archive]) assert.match(page, /high \(upstream\)/);
+  assert.match(detail, /Upstream CVSS score: 8.7/);
+  assert.match(detail, /Product applicability assessment/);
+  assert.match(detail, /Scope &lt;unsafe&gt; &amp; limitations/);
+  assert.doesNotMatch(detail, /<unsafe>/);
+  assert.match(feed, /label="high \(upstream\)"/);
+});
+
+test('the node-forge notice retains an open assessment and does not invent a fixed version', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-notice-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories } = await buildSite({ output });
+  const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-001');
+  assert.ok(notice);
+  assert.equal(notice.status, 'open');
+  assert.equal(notice.severitySource, 'upstream');
+  assert.deepEqual(notice.cves, ['CVE-2026-85393']);
+  assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
+  assert.match(notice.affected[0].versions, /27\.2\.0, 27\.2\.1 and 27\.2\.2/);
+  assert.match(notice.summary, /Remote exploitability.*has not been established/);
+  assert.match(notice.impact, /not a Vision One-specific/);
+  const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-001/index.html'), 'utf8');
+  assert.match(detail, /No fixed version listed/);
+  assert.match(detail, /Status: open/);
+  assert.match(detail, /No Vision One-specific CVSS score is assigned/);
+  assert.match(detail, /csr.verify\(\)/);
+  assert.match(detail, /literal-import scan/);
+  assert.match(detail, /not a general security guarantee/);
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
+  assert.match(feed, /VO-SA-2026-001/);
+  assert.doesNotMatch(detail, /No product advisories published yet/);
 });
