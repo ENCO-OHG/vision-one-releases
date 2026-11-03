@@ -210,7 +210,7 @@ test('the SMTP notice gives a scoped configuration procedure without inventing a
   assert.equal(notice.cvss, undefined);
   assert.equal(notice.status, 'open');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3']);
   assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-002/index.html'), 'utf8');
   assert.match(detail, /Not rated/);
@@ -236,12 +236,13 @@ test('security status separates the dated npm snapshot, open notices and build-t
   assert.ok(page.includes(escape(review.productVersion)));
   assert.match(page, /VO-SA-2026-001/);
   assert.match(page, /VO-SA-2026-002/);
-  assert.match(page, /eight moderate npm package entries for this one upstream advisory/);
-  assert.match(page, /does not prove that every packaged file is unaffected/);
+  assert.match(page, /GHSA-jr5w-w6x2-84p9/);
+  assert.match(page, /zero production-only application npm audit therefore does not establish that the installer is unaffected/);
+  assert.match(page, /not a security remediation or a claim of safety/);
   assert.match(page, /not a live vulnerability monitor/);
   assert.match(page, /not a comprehensive code audit/);
   assert.match(page, /native libraries/);
-  assert.equal(review.checks.find((check) => check.component === 'Electron build tooling').entries, 8);
+  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 18);
   for (const check of review.checks) {
     assert.ok(page.includes(escape(check.scope)));
     assert.ok(page.includes(escape(check.assessment)));
@@ -330,10 +331,10 @@ test('the node-forge notice retains an open assessment and does not invent a fix
   assert.ok(notice);
   assert.equal(notice.status, 'open');
   assert.equal(notice.severitySource, 'upstream');
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3']);
   assert.deepEqual(notice.cves, ['CVE-2026-85393']);
   assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
-  assert.match(notice.affected[0].versions, /27\.2\.0, 27\.2\.1 and 27\.2\.2/);
+  assert.match(notice.affected[0].versions, /27\.2\.3 release-preparation lockfile/);
   assert.match(notice.summary, /Remote exploitability.*has not been established/);
   assert.match(notice.impact, /not a Vision One-specific/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-001/index.html'), 'utf8');

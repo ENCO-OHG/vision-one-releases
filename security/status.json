@@ -1,13 +1,13 @@
 {
-  "reviewedAt": "2026-10-20T13:23:33Z",
-  "productVersion": "27.2.2",
+  "reviewedAt": "2026-11-03T07:01:13Z",
+  "productVersion": "27.2.3 (release-preparation baseline)",
   "checks": [
-    { "component": "Server", "scope": "Production and development npm dependencies", "entries": 1, "assessment": "One high-severity upstream node-forge finding; product applicability is tracked in VO-SA-2026-001." },
-    { "component": "Client", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
+    { "component": "Server", "scope": "Production and development npm dependencies", "entries": 7, "assessment": "Four high and three moderate package entries: body-parser, follow-redirects, ip-address, node-forge, nodemailer, qs and systeminformation. API body parsing, mail and PKI are used by the product; advisory-specific exploitability remains under assessment. The original forge RSA finding remains open in VO-SA-2026-001; additional forge findings are not covered by that RSA-only assessment. Dependencies are unchanged in this release preparation." },
+    { "component": "Client", "scope": "Production and development npm dependencies", "entries": 11, "assessment": "Four high, six moderate and one low package entries, including Angular CLI/MCP, Vite, Vitest, Zod and fast-uri. Build/test server findings require isolation and follow-up; they do not automatically establish installed runtime exposure." },
     { "component": "Client worker", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
     { "component": "Shared", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
-    { "component": "Manual build", "scope": "Production and development npm dependencies", "entries": 0, "assessment": "No findings reported by this npm audit." },
+    { "component": "Manual build", "scope": "Production and development npm dependencies", "entries": 4, "assessment": "Four moderate package entries through the Asciidoctor/glob/minimatch chain; build-time applicability and compatible remediation remain under review." },
     { "component": "Electron application", "scope": "Production npm dependencies only (--omit=dev)", "entries": 0, "assessment": "No findings reported by this npm audit. This is not an audit of Electron/Chromium binaries or all packaged components." },
-    { "component": "Electron build tooling", "scope": "Complete application npm dependency tree", "entries": 8, "assessment": "Eight moderate package entries trace to one sprintf-js advisory, CVE-2026-97058 / GHSA-hp3w-g68c-fv3c. These are not eight independent vulnerabilities or eight demonstrated runtime exposures." }
+    { "component": "Electron binary and build tooling", "scope": "Complete application npm dependency tree, including dev-declared shipped Electron", "entries": 18, "assessment": "Two high and sixteen moderate package entries. Electron GHSA-jr5w-w6x2-84p9 concerns compromised eMudhra intermediate certificate mitigation and affects the pinned binary range; it is not merely a build-tool finding. Other entries include undici and build-chain findings. The zero production-only npm count excludes Electron and must not be used to declare the installer unaffected. Upstream updates are reported available; publication of the unchanged baseline was explicitly selected by the release requester after disclosure, not as a security remediation." }
   ]
 }
