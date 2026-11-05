@@ -200,7 +200,7 @@ test('CSS content changes invalidate cached stylesheets consistently across all 
   assert.match(await readFile(path.join(changed, changedName), 'utf8'), /New layout revision/);
 });
 
-test('the SMTP notice gives a scoped configuration procedure without inventing a fix or score', async (t) => {
+test('the SMTP notice records mandatory TLS remediation without inventing a CVE or score', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-smtp-notice-'));
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories } = await buildSite({ output });
@@ -208,19 +208,20 @@ test('the SMTP notice gives a scoped configuration procedure without inventing a
   assert.ok(notice);
   assert.equal(notice.severity, 'not-rated');
   assert.equal(notice.cvss, undefined);
-  assert.equal(notice.status, 'open');
+  assert.equal(notice.status, 'resolved');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4']);
-  assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.2.5']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.5']);
+  assert.equal(notice.published, '2026-10-20T13:23:33Z');
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-002/index.html'), 'utf8');
   assert.match(detail, /Not rated/);
-  assert.match(detail, /No fixed version listed/);
-  assert.match(detail, /does not itself require an encrypted connection or prevent STARTTLS downgrade/);
+  assert.match(detail, /requireTLS=true/);
+  assert.match(detail, /tls.rejectUnauthorized=true/);
   assert.match(detail, /lacking the explicit-choice marker/);
-  assert.match(detail, /Settings &gt; Mail and enable TLS certificate verification/);
+  assert.match(detail, /no disable-verification UI switch/);
   assert.match(detail, /global technical-diagnostics setting, not a one-off test address/);
   assert.match(detail, /restore the intended configuration/);
-  assert.match(detail, /do not validate a customer&#39;s relay/);
+  assert.match(detail, /not verification of customer relays/);
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-002/);
   assert.match(feed, /term="not-rated" label="Not rated"/);
@@ -238,13 +239,14 @@ test('security status separates the dated npm snapshot, open notices and build-t
   assert.match(page, /VO-SA-2026-002/);
   assert.match(page, /GHSA-jr5w-w6x2-84p9/);
   assert.match(page, /zero production-only application npm audit therefore does not establish that the installer is unaffected/);
-  assert.match(page, /not a new full dependency audit/);
+  assert.match(page, /No open or mitigated notices are listed/);
   assert.match(page, /not a live vulnerability monitor/);
   assert.match(page, /not a comprehensive code audit/);
   assert.match(page, /native libraries/);
-  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 15);
+  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 6);
   assert.equal(review.checks.find((check) => check.component === 'Server').entries, 0);
-  assert.match(page, /not 19 distinct CVEs/);
+  assert.match(page, /not six distinct CVEs/);
+  assert.match(page, /not that every older installation is updated/);
   assert.match(page, /VO-SA-2026-003/);
   for (const check of review.checks) {
     assert.ok(page.includes(escape(check.scope)));
@@ -264,7 +266,7 @@ test('deployment guidance and every generated page use working internal links', 
   assert.match(deployment, /<h1>Secure deployment guidance<\/h1>/);
   assert.match(deployment, /selected operating data are intentionally readable without login/);
   assert.match(deployment, /Vision One Operators/);
-  assert.match(deployment, /does not itself require TLS/);
+  assert.match(deployment, /27\.2\.5 requires TLS and certificate verification/);
   assert.match(deployment, /does not itself verify the downloaded file/);
   assert.match(deployment, /databases and WALs/);
   const pages = ['index.html', 'advisories/index.html', 'security-status/index.html', 'deployment/index.html', ...advisories.map((advisory) => `advisories/${advisory.id}/index.html`)];
@@ -354,13 +356,13 @@ test('Node2Shell distinguishes corrected packaged runtime from externally manage
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories } = await buildSite({ output });
   const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-003');
-  assert.equal(notice.status, 'open');
+  assert.equal(notice.status, 'resolved');
   assert.equal(notice.severitySource, 'upstream');
   assert.deepEqual(notice.cves, ['CVE-2026-111497']);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.4']);
-  assert.deepEqual(notice.affected[0].fixedVersions, []);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.4', '27.2.5']);
+  assert.match(notice.affected[0].fixedVersions[0], /27\.2\.5/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-003/index.html'), 'utf8');
-  for (const text of ['24.22.1', '24.22.2', '22.23.4', '26.12.1', '44.10.1', 'BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH', 'before many route-specific authorization checks', 'not part of that release', 'Older installers']) {
+  for (const text of ['24.22.1', '24.22.2', '22.23.4', '26.12.1', '44.10.1', 'BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH', 'before many route-specific authorization checks', 'before runtime import', 'Older installers']) {
     assert.ok(detail.includes(text), `Missing runtime qualification: ${text}`);
   }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
