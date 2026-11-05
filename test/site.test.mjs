@@ -210,7 +210,7 @@ test('the SMTP notice gives a scoped configuration procedure without inventing a
   assert.equal(notice.cvss, undefined);
   assert.equal(notice.status, 'open');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4']);
   assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-002/index.html'), 'utf8');
   assert.match(detail, /Not rated/);
@@ -238,11 +238,14 @@ test('security status separates the dated npm snapshot, open notices and build-t
   assert.match(page, /VO-SA-2026-002/);
   assert.match(page, /GHSA-jr5w-w6x2-84p9/);
   assert.match(page, /zero production-only application npm audit therefore does not establish that the installer is unaffected/);
-  assert.match(page, /not a security remediation or a claim of safety/);
+  assert.match(page, /not a new full dependency audit/);
   assert.match(page, /not a live vulnerability monitor/);
   assert.match(page, /not a comprehensive code audit/);
   assert.match(page, /native libraries/);
-  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 18);
+  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 15);
+  assert.equal(review.checks.find((check) => check.component === 'Server').entries, 0);
+  assert.match(page, /not 19 distinct CVEs/);
+  assert.match(page, /VO-SA-2026-003/);
   for (const check of review.checks) {
     assert.ok(page.includes(escape(check.scope)));
     assert.ok(page.includes(escape(check.assessment)));
@@ -323,23 +326,42 @@ test('reviewed version summaries are escaped and displayed below the linked titl
   }
 });
 
-test('the node-forge notice retains an open assessment and does not invent a fixed version', async (t) => {
+test('Node2Shell distinguishes corrected packaged runtime from externally managed Node', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-node2shell-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories } = await buildSite({ output });
+  const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-003');
+  assert.equal(notice.status, 'open');
+  assert.equal(notice.severitySource, 'upstream');
+  assert.deepEqual(notice.cves, ['CVE-2026-111497']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.4']);
+  assert.deepEqual(notice.affected[0].fixedVersions, []);
+  const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-003/index.html'), 'utf8');
+  for (const text of ['24.22.1', '24.22.2', '22.23.4', '26.12.1', '44.10.1', 'BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH', 'before many route-specific authorization checks', 'not part of that release', 'Older installers']) {
+    assert.ok(detail.includes(text), `Missing runtime qualification: ${text}`);
+  }
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  assert.match(feed, /VO-SA-2026-003/);
+});
+
+test('the node-forge revision records the published fix and retains historical evidence', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-security-notice-'));
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories } = await buildSite({ output });
   const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-001');
   assert.ok(notice);
-  assert.equal(notice.status, 'open');
+  assert.equal(notice.status, 'resolved');
   assert.equal(notice.severitySource, 'upstream');
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4']);
   assert.deepEqual(notice.cves, ['CVE-2026-85393']);
-  assert.ok(notice.affected.every((product) => product.fixedVersions.length === 0));
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.4']);
   assert.match(notice.affected[0].versions, /27\.2\.3 release-preparation lockfile/);
   assert.match(notice.summary, /Remote exploitability.*has not been established/);
   assert.match(notice.impact, /not a Vision One-specific/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-001/index.html'), 'utf8');
-  assert.match(detail, /No fixed version listed/);
-  assert.match(detail, /Status: open/);
+  assert.equal(notice.published, '2026-10-20T11:38:04Z');
+  assert.match(detail, /Source discrepancy/);
+  assert.match(detail, /Status: resolved/);
   assert.match(detail, /No Vision One-specific CVSS score is assigned/);
   assert.match(detail, /csr.verify\(\)/);
   assert.match(detail, /literal-import scan/);

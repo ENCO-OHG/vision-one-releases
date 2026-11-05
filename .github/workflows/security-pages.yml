@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 24.15.0
+          node-version: 24.22.2
       - name: Validate advisories and test site generation
         run: npm test
       - name: Build static website and Atom feed
