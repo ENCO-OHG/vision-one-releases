@@ -75,7 +75,12 @@ td small { display: block; color: var(--muted); font-size: .72rem; margin-bottom
 .advisory-versions { margin: .45rem 0 0; font-size: .8rem; color: var(--muted); }
 .advisory-versions strong { font-weight: 600; color: var(--ink); }
 td time { white-space: nowrap; }
-.severity { display: inline-block; padding: .2rem .65rem; border-radius: 4px; font-size: .75rem; font-weight: 750; text-transform: uppercase; background: #edf1f4; color: #374956; }
+.severity, .status-badge { display: inline-block; padding: .2rem .65rem; border-radius: 4px; font-size: .75rem; font-weight: 750; text-transform: uppercase; background: #edf1f4; color: #374956; }
+.status-badge { white-space: nowrap; }
+.status-badge.resolved { background: #d9f3e4; color: #14532d; }
+.status-badge.mitigated { background: #dcecff; color: #17477e; }
+.status-badge.danger { background: #ffe0e3; color: #8f1731; }
+.status-badge.warning { background: #ffe7d4; color: #8c3a09; }
 .severity.critical { background: #ffe0e3; color: #8f1731; }
 .severity.high { background: #ffe7d4; color: #8c3a09; }
 .severity.medium { background: #fff0c3; color: #6e5000; }

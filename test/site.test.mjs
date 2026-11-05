@@ -284,6 +284,29 @@ test('deployment guidance and every generated page use working internal links', 
   assert.match(sitemap, /deployment\//);
 });
 
+test('status badges preserve readable labels and share tones across tables and detail pages', async (t) => {
+  const cases = [
+    ['resolved', 'critical', 'resolved'], ['resolved', 'not-rated', 'resolved'],
+    ['mitigated', 'high', 'mitigated'], ['open', 'critical', 'danger'],
+    ['open', 'high', 'danger'], ['open', 'medium', 'warning'],
+    ['open', 'low', 'warning'], ['open', 'informational', 'neutral'],
+    ['open', 'not-rated', 'neutral'],
+  ];
+  const advisories = cases.map(([status, severity], index) => ({
+    ...example(), id: `VO-SA-2026-${String(index + 1).padStart(3, '0')}`, status, severity,
+  }));
+  const output = await fixtureSite(t, advisories);
+  const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
+  for (const [index, [status, , tone]] of cases.entries()) {
+    assert.ok(archive.includes(`<span class="status-badge ${tone}">${status}</span>`));
+    const detail = await readFile(path.join(output, `advisories/${advisories[index].id}/index.html`), 'utf8');
+    assert.ok(detail.includes(`<span class="status-badge ${tone}">Status: ${status}</span>`));
+  }
+  for (const relative of ['index.html', 'security-status/index.html']) {
+    assert.match(await readFile(path.join(output, relative), 'utf8'), /class="status-badge /);
+  }
+});
+
 test('assessed entries generate escaped detail pages and consistent archive/feed ordering', async (t) => {
   const first = example();
   const newest = { ...example(), id: 'VO-SA-2026-002', updated: '2026-10-21T11:00:00Z' };
