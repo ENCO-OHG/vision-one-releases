@@ -210,8 +210,8 @@ test('the SMTP notice records mandatory TLS remediation without inventing a CVE 
   assert.equal(notice.cvss, undefined);
   assert.equal(notice.status, 'resolved');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.2.5', '27.3.0-beta.4']);
-  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.5', '27.3.0-beta.4 (published signed prerelease)']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.2.5', '27.3.0-beta.4', '27.3.0-beta.5']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.5', '27.3.0-beta.4 (published signed prerelease)', '27.3.0-beta.5 (published signed prerelease)']);
   assert.equal(notice.published, '2026-10-20T13:23:33Z');
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-002/index.html'), 'utf8');
   assert.match(detail, /Not rated/);
@@ -359,7 +359,7 @@ test('Node2Shell distinguishes corrected packaged runtime from externally manage
   assert.equal(notice.status, 'resolved');
   assert.equal(notice.severitySource, 'upstream');
   assert.deepEqual(notice.cves, ['CVE-2026-111497']);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.4', '27.2.5', '27.3.0-beta.4']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.4', '27.2.5', '27.3.0-beta.4', '27.3.0-beta.5']);
   assert.match(notice.affected[0].fixedVersions[0], /27\.2\.5/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-003/index.html'), 'utf8');
   for (const text of ['24.22.1', '24.22.2', '22.23.4', '26.12.1', '44.10.1', 'BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH', 'before many route-specific authorization checks', 'before runtime import', 'Older installers']) {
@@ -367,6 +367,27 @@ test('Node2Shell distinguishes corrected packaged runtime from externally manage
   }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-003/);
+});
+
+test('additional Forge findings distinguish the published beta fix from the stable baseline', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-forge-143-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories, review } = await buildSite({ output });
+  const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-004');
+  assert.equal(notice.severitySource, 'upstream');
+  assert.equal(notice.cvss, undefined);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.5', '27.3.0-beta.4', '27.3.0-beta.5']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)']);
+  assert.match(notice.remediation, /Stable-only installations should request a supported remediation plan/);
+  assert.match(notice.summary, /remotely exploitable Vision One path has not been established/);
+  assert.match(review.productVersion, /stable baseline 27\.2\.5 retains node-forge 1\.4\.2/);
+  const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-004/index.html'), 'utf8');
+  for (const text of ['GHSA-3cc4-3294-vgjf', 'GHSA-6889-vf6x-f3g5', 'GHSA-w4xr-hqv8-ch44', 'GHSA-6cv4-p8m7-4r25', 'GHSA-j8rw-jp99-435v', 'CVE-2026-125335', 'not a stable-channel patch', '42992655669']) {
+    assert.ok(detail.includes(text), `Missing scope/reference: ${text}`);
+  }
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  assert.match(feed, /VO-SA-2026-004/);
+  assert.equal((feed.match(/<updated>2026-11-11T09:22:43Z<\/updated>/g) ?? []).length, 5);
 });
 
 test('the node-forge revision records the published fix and retains historical evidence', async (t) => {
@@ -377,9 +398,9 @@ test('the node-forge revision records the published fix and retains historical e
   assert.ok(notice);
   assert.equal(notice.status, 'resolved');
   assert.equal(notice.severitySource, 'upstream');
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.3.0-beta.4']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.3.0-beta.4', '27.3.0-beta.5']);
   assert.deepEqual(notice.cves, ['CVE-2026-85393']);
-  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.4', '27.3.0-beta.4 (published signed prerelease)']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.4', '27.3.0-beta.4 (published signed prerelease)', '27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)']);
   assert.match(notice.affected[0].versions, /27\.2\.3 release-preparation lockfile/);
   assert.match(notice.summary, /Remote exploitability.*has not been established/);
   assert.match(notice.impact, /not a Vision One-specific/);
