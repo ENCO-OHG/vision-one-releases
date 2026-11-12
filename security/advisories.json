@@ -3,22 +3,24 @@
     "id": "VO-SA-2026-004",
     "title": "node-forge 1.4.3 corrections: certificate, Ed25519 and TLS/HTTP applicability",
     "published": "2026-11-11T09:22:43Z",
-    "updated": "2026-11-11T09:22:43Z",
+    "updated": "2026-11-12T14:14:04Z",
     "severity": "high",
     "severitySource": "upstream",
     "status": "resolved",
-    "reviewedVersions": ["27.2.5", "27.3.0-beta.4", "27.3.0-beta.5"],
+    "reviewedVersions": ["27.2.5", "27.3.0-beta.4", "27.3.0-beta.5", "27.3.0-rc.1"],
     "summary": "Signed prerelease 27.3.0-beta.5 ships node-forge 1.4.3 in Server/PKI after successful Windows release validation. It corrects additional upstream certificate nameConstraints, Ed25519 small-order-key and Forge TLS/HTTP findings. Reviewed 27.2.5 and 27.3.0-beta.4 lockfiles include 1.4.2. A remotely exploitable Vision One path has not been established. Resolution identifies a published patched prerelease, not a stable-channel patch or a recommendation to deploy beta software without acceptance.",
     "affected": [
       {
         "product": "Vision One Server / packaged Windows Runtime and separately maintained PKI tooling",
         "versions": "Reviewed 27.2.5 and 27.3.0-beta.4 include node-forge 1.4.2, within the upstream affected dependency range. This is dependency inclusion, not demonstrated product exploitability. Earlier releases, customer integrations and dynamic third-party paths have not been comprehensively assessed and must not be assumed unaffected.",
-        "fixedVersions": ["27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)"],
+        "fixedVersions": ["27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)", "27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)"],
         "action": "For environments approved for prerelease use, evaluate the signed beta-5 installer with backups and site acceptance. Stable 27.2.5 is not a fix for these additional findings; stable-only installations should request a supported remediation plan. Do not manually replace packaged libraries. Separately deployed PKI tooling requires its own controlled update."
       }
     ],
     "impact": "Upstream rates the nameConstraints chain-verification finding High, Forge TLS/HTTP denial-of-service findings Moderate and Ed25519 small-order-key verification Low (CVE-2026-125335). Impacts concern certificate-chain acceptance outside permitted names, forged-signature acceptance for small-order keys, TLS client crashes and HTTP parsing CPU exhaustion in the corresponding Forge APIs. These are upstream impacts and ratings, not demonstrated Vision One attacks or a product-specific CVSS score. No license, authentication or runtime TLS bypass has been demonstrated by this review.",
     "assessment": [
+      "Revision 2026-11-12: signed 27.3.0-rc.1 is published after authoritative Windows workflow 43232209650 passed, retaining node-forge 1.4.3 and the existing certificate/TLS/PKI protections. This extends the reviewed patched prerelease scope; no new upstream fix or stable 27.2 patch is claimed. Stable 27.2.5 retains 1.4.2. RC acceptance and separately maintained PKI tooling remain site-specific obligations.",
+      "The RC was published at 2026-11-12T14:13:41Z from workflow-created source tag 43ba6aec06bca395a551d88411628160265d977b. Downloaded installer SHA-256 ac649a48330612a31e98a2fba1464ac6f251678545c915040522e0614d61bcfd matches the checksum asset and GitHub digest; Windows reports Valid Authenticode for EN-CO DI STEINDL ROBERT & C. SNC. Notes and attached release-time audit match checked sources. The complete gate passed 2528 emulator tests (10 existing skips), 1623 browser tests and manual/distribution verification.",
       "Downloaded beta-5 installer SHA-256 matches the attached checksum and GitHub asset digest (1fb89c037c1f9d4005f44ff3a3beef536a9a0642b7d49d9fb3858c13be17f34d); Windows reports a valid Authenticode signature for EN-CO DI STEINDL ROBERT & C. SNC. Published release notes and attached security audit match the checked release sources.",
       "Published 2026-11-11 after signed Windows workflow 42992655669 passed the complete release gate, Server/PKI production audits, certificate/TLS/PKI regressions, 2541 emulator tests (10 existing skips), 1623 real-browser tests and manual/distribution verification. The workflow-created source tag identifies f587c5d9d0c75ca16b852efcdadab06bd5d85877. This is not a penetration test or stable 27.3 sign-off.",
       "Fresh release-preparation npm audits initially aggregated four advisories into one moderate node-forge package entry in each of Server and PKI: GHSA-6889-vf6x-f3g5, GHSA-w4xr-hqv8-ch44, GHSA-6cv4-p8m7-4r25 and GHSA-j8rw-jp99-435v. Updating both to 1.4.3 cleared those entries. The upstream changelog additionally lists High GHSA-3cc4-3294-vgjf (nameConstraints), absent from that initial npm output; npm metadata alone is therefore not the basis of this assessment.",
@@ -33,6 +35,7 @@
       "Keep build/maintenance tooling isolated from untrusted network access and inputs. Do not use a clean npm audit or the absence of a demonstrated product exploit as proof that every runtime path is safe."
     ],
     "references": [
+      { "title": "Vision One 27.3.0-rc.1 signed release candidate and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.1" },
       { "title": "Vision One 27.3.0-beta.5 signed prerelease and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-beta.5" },
       { "title": "Upstream node-forge 1.4.3 changelog", "url": "https://github.com/digitalbazaar/forge/blob/v1.4.3/CHANGELOG.md" },
       { "title": "X.509 nameConstraints chain verification", "url": "https://github.com/digitalbazaar/forge/security/advisories/GHSA-3cc4-3294-vgjf" },
@@ -47,28 +50,29 @@
     "id": "VO-SA-2026-003",
     "title": "Node2Shell: Brotli runtime applicability and external Node.js updates",
     "published": "2026-11-05T08:51:24Z",
-    "updated": "2026-11-11T09:22:43Z",
+    "updated": "2026-11-12T14:14:04Z",
     "severity": "high",
     "severitySource": "upstream",
     "status": "resolved",
-    "reviewedVersions": ["27.2.4", "27.2.5", "27.3.0-beta.4", "27.3.0-beta.5"],
+    "reviewedVersions": ["27.2.4", "27.2.5", "27.3.0-beta.4", "27.3.0-beta.5", "27.3.0-rc.1"],
     "summary": "Vision One 27.2.5 adds a pre-start Node safety gate for externally started servers and retains the corrected Electron 44.10.1 embedded decoder already reviewed in 27.2.4. The finding is resolved for the reviewed updated deployment paths. Older installations and external Node executables still require update and restart; publication of this notice does not patch a running process or establish every older installer's applicability.",
     "affected": [
       {
         "product": "Vision One server started with an external Node.js executable",
         "versions": "The 27.2.4 HTTP parsing path was reviewed. Exposure depends on the actual runtime binary and network reachability, not just the Vision One version. Upstream fixed releases are Node.js 22.23.4, 24.22.1 and 26.12.1 in their respective lines. Older installers and other deployment combinations remain outside this bounded review and must not be assumed unaffected.",
-        "fixedVersions": ["27.2.5 (startup safety gate; actual Node executable must meet the floor)", "27.3.0-beta.4 (published signed prerelease; same startup floor)", "27.3.0-beta.5 (published signed prerelease; same startup floor)"],
+        "fixedVersions": ["27.2.5 (startup safety gate; actual Node executable must meet the floor)", "27.3.0-beta.4 (published signed prerelease; same startup floor)", "27.3.0-beta.5 (published signed prerelease; same startup floor)", "27.3.0-rc.1 (published signed release candidate; same startup floor)"],
         "action": "Update to 27.2.5 or later and use the supported server entrypoint. Node 24.x must be >=24.22.1; versions >=26.12.1 are allowed with a compatibility warning, including later prereleases above that floor. Other versions are rejected before runtime import. Update the actual service executable and restart; newer allowed versions are not blanket-qualified for native compatibility or future vulnerabilities."
       },
       {
         "product": "Vision One packaged Windows Runtime",
         "versions": "Published signed 27.2.4 and 27.2.5 ship Electron 44.10.1 with Node 24.22.1 and Chromium 152.0.7977.169. The reviewed embedded Brotli decoder contains the correction. No complete affected-version range or first fixed installer version is established for earlier installers.",
-        "fixedVersions": ["27.2.4 (reviewed corrected embedded decoder; not an established first fixed version)", "27.3.0-beta.4 (published signed prerelease; same reviewed Electron baseline)", "27.3.0-beta.5 (published signed prerelease; same reviewed Electron baseline)"],
+        "fixedVersions": ["27.2.4 (reviewed corrected embedded decoder; not an established first fixed version)", "27.3.0-beta.4 (published signed prerelease; same reviewed Electron baseline)", "27.3.0-beta.5 (published signed prerelease; same reviewed Electron baseline)", "27.3.0-rc.1 (published signed release candidate; same reviewed Electron baseline)"],
         "action": "Use the published signed 27.2.4 installer or a later supported release. Do not replace embedded Node, Electron or packaged library files manually. Assess any separately started services independently."
       }
     ],
     "impact": "Upstream rates CVE-2026-111497 High. Malformed Brotli input can cause an out-of-bounds write, potentially leading to a crash, disclosure of process memory or remote code execution. This is an upstream impact statement, not a demonstrated Vision One exploit or a product-specific CVSS score. No exploit payload was used in this review and no customer compromise is claimed.",
     "assessment": [
+      "Revision 2026-11-12: published signed 27.3.0-rc.1 passed authoritative Windows workflow 43232209650 with the same Electron 44.10.1 and external Node startup-floor baselines. This is not a new Brotli fix or blanket qualification of external executables. Original stable recommendations, restart requirements and older-installer scope limitations remain.",
       "Revision 2026-11-11: published signed 27.3.0-beta.5 passed Windows workflow 42992655669 and retains the reviewed Electron 44.10.1 baseline and external Node startup floor. Downloaded installer checksum and valid publisher signature were verified. Existing stable update recommendations, external-runtime restart obligations and older-installer review limitations remain unchanged; this is not a new Brotli fix.",
       "Revision 2026-11-10: signed 27.3.0-beta.4 is published after successful authoritative Windows workflow 42787248122. It retains the standalone startup floor and reviewed Electron 44.10.1 baseline. Downloaded installer SHA-256 and valid publisher Authenticode signature were verified. This prerelease does not supersede stable deployment recommendations or qualify arbitrary external Node executables; update/restart and native-binary review limitations remain.",
       "Release revision 27.2.5 (2026-11-05): the supported server entrypoint checks the actual Node executable before importing runtime code, opening network listeners or starting migrations. It permits Node 24.x >=24.22.1 normally, and all versions >=26.12.1 with a compatibility warning. Other versions are blocked. Startup tests cover rejected versions, safe floors, later prereleases and rejection before runtime import. Electron's reviewed Node 24.22.1 passes the same floor without an exemption. Resolution describes these updated deployment paths; it does not declare older installations patched or every permitted future Node version free of security defects.",
@@ -85,6 +89,7 @@
       "Keep development and build services isolated from untrusted network access and inputs. Do not rely on a clean npm audit, login requirements or a changed version pin as proof that running executables are patched."
     ],
     "references": [
+      { "title": "Vision One 27.3.0-rc.1 signed release candidate and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.1" },
       { "title": "Vision One 27.3.0-beta.4 signed prerelease and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-beta.4" },
       { "title": "Vision One 27.2.5 release and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.2.5" },
       { "title": "Node.js October 2026 security releases: CVE-2026-111497 and fixed releases", "url": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases" },
@@ -98,21 +103,22 @@
     "id": "VO-SA-2026-002",
     "title": "SMTP certificate verification is disabled by default",
     "published": "2026-10-20T13:23:33Z",
-    "updated": "2026-11-11T09:22:43Z",
+    "updated": "2026-11-12T14:14:04Z",
     "severity": "not-rated",
     "status": "resolved",
-    "reviewedVersions": ["27.2.0", "27.2.1", "27.2.2", "27.2.3", "27.2.4", "27.2.5", "27.3.0-beta.4", "27.3.0-beta.5"],
+    "reviewedVersions": ["27.2.0", "27.2.1", "27.2.2", "27.2.3", "27.2.4", "27.2.5", "27.3.0-beta.4", "27.3.0-beta.5", "27.3.0-rc.1"],
     "summary": "Vision One 27.2.5 requires encrypted and certificate-verified SMTP for all outgoing mail, including existing configurations. The disabling UI switch is removed and old configuration flags cannot bypass the transport policy. This resolves the compatibility default described for 27.2.0 through 27.2.4. Mail delivery can stop when a relay lacks TLS or trusted hostname-matching certificates; commissioning and delivery checks remain required. No CVE or CVSS score is assigned.",
     "affected": [
       {
         "product": "Vision One outbound SMTP mail (alerting, diagnostics and reports)",
         "versions": "27.2.0 through 27.2.4 were reviewed. The default and legacy-settings normalization can disable SMTP certificate verification. Installations with an explicitly enabled and persisted verification choice do not have that disabled-verification configuration, but still require appropriate TLS transport policy. Earlier releases and prereleases are outside this review and must not be assumed unaffected.",
-        "fixedVersions": ["27.2.5", "27.3.0-beta.4 (published signed prerelease)", "27.3.0-beta.5 (published signed prerelease)"],
+        "fixedVersions": ["27.2.5", "27.3.0-beta.4 (published signed prerelease)", "27.3.0-beta.5 (published signed prerelease)", "27.3.0-rc.1 (published signed release candidate)"],
         "action": "Update to 27.2.5 or later in an approved maintenance window. Confirm the relay supports STARTTLS or configured implicit TLS and presents a valid hostname-matching chain trusted by the runtime. Verify diagnostic, alarm and report delivery; keep an alternative notification path until accepted."
       }
     ],
     "impact": "When SMTP TLS certificate verification is disabled, the runtime accepts a presented mail-server certificate without the normal trust and hostname validation. An attacker able to intercept or redirect the SMTP connection may impersonate the mail server and obtain SMTP credentials or operational email content. This describes the security consequence of the configuration; it is not a claim that an attack or credential compromise has occurred. No CVE is assigned by this notice and no product-specific CVSS score has been established. Severity is therefore displayed as Not rated rather than as an invented numerical or categorical assessment.",
     "assessment": [
+      "Revision 2026-11-12: published signed 27.3.0-rc.1 passed authoritative Windows workflow 43232209650, including mail checks, and retains mandatory encrypted/certificate-verified SMTP. Stable remediation is unchanged; relay trust, hostname coverage, controlled restart and delivery commissioning remain necessary. RC publication is not plant acceptance.",
       "Revision 2026-11-11: published signed 27.3.0-beta.5 retains mandatory SMTP TLS/certificate verification and passed the authoritative Windows gate including mail checks. Downloaded installer hash and publisher signature were verified. Relay trust, hostname and delivery commissioning remain required; stable recommendations are unchanged.",
       "Revision 2026-11-10: published signed prerelease 27.3.0-beta.4 retains mandatory SMTP TLS and certificate verification. The authoritative Windows release gate passed, including settings/mail checks; the downloaded installer hash and publisher signature were verified. This adds a reviewed fixed prerelease, not a recommendation to replace a supported stable installation with beta software. Relay trust, hostname and delivery commissioning remain required.",
       "Release revision 27.2.5 (2026-11-05): the central mail transport forces requireTLS=true, ignoreTLS=false, opportunisticTLS=false and tls.rejectUnauthorized=true after loading stored settings and credentials. Certificate verification is normalized as enabled on load and settings API updates. The Mail UI no longer exposes a switch to disable it. Existing implicit TLS remains supported. Tests cover a real local SMTP relay without STARTTLS and an untrusted self-signed TLS endpoint; both fail before SMTP authentication/mail transfer. These are controlled fixtures, not verification of customer relays.",
@@ -133,6 +139,7 @@
       "Restrict mail-server connectivity and administrative access to approved networks and accounts. These are defense-in-depth controls, not a complete substitute for authenticated, TLS-required mail transport."
     ],
     "references": [
+      { "title": "Vision One 27.3.0-rc.1 signed release candidate and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.1" },
       { "title": "Vision One 27.3.0-beta.4 signed prerelease and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-beta.4" },
       { "title": "Nodemailer SMTP transport: TLS and certificate options", "url": "https://nodemailer.com/smtp" },
       { "title": "Node.js TLS: certificate verification and rejectUnauthorized", "url": "https://nodejs.org/api/tls.html" },
@@ -144,22 +151,23 @@
     "id": "VO-SA-2026-001",
     "title": "node-forge RSA signature verification: Vision One applicability assessment",
     "published": "2026-10-20T11:38:04Z",
-    "updated": "2026-11-11T09:22:43Z",
+    "updated": "2026-11-12T14:14:04Z",
     "severity": "high",
     "severitySource": "upstream",
     "status": "resolved",
-    "reviewedVersions": ["27.2.0", "27.2.1", "27.2.2", "27.2.3", "27.2.4", "27.3.0-beta.4", "27.3.0-beta.5"],
+    "reviewedVersions": ["27.2.0", "27.2.1", "27.2.2", "27.2.3", "27.2.4", "27.3.0-beta.4", "27.3.0-beta.5", "27.3.0-rc.1"],
     "summary": "Vision One 27.2.4 ships node-forge 1.4.2, including the upstream correction for CVE-2026-85393 first released in 1.4.1. The dependency finding is resolved in this published product version. Reviewed 27.2.0 through 27.2.3 baselines include node-forge 1.4.0, with the affected verifier reachable through local CSR handling. Remote exploitability in Vision One has not been established. High severity refers to the upstream library advisory, not a separately established Vision One product score.",
     "affected": [
       {
         "product": "Vision One server / Windows Runtime (dependency inclusion confirmed from release manifests)",
         "versions": "27.2.0, 27.2.1, 27.2.2 and the 27.2.3 release-preparation lockfile include node-forge 1.4.0. These are the reviewed baselines, not a complete affected-version range. Earlier releases and prereleases have not been comprehensively assessed in this notice and must not be assumed unaffected.",
-        "fixedVersions": ["27.2.4", "27.3.0-beta.4 (published signed prerelease)", "27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)"],
+        "fixedVersions": ["27.2.4", "27.3.0-beta.4 (published signed prerelease)", "27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)", "27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)"],
         "action": "Update to the published signed Vision One 27.2.4 installer or a later supported release under the site maintenance procedure. Retain certificate/CSR access protection and OT segmentation; do not replace individual packaged libraries."
       }
     ],
     "impact": "CVE-2026-85393 concerns acceptance of extra elements in the nested DigestAlgorithm sequence during node-forge RSA PKCS#1 v1.5 signature verification. Upstream reports that this can permit signature forgery with low-public-exponent RSA keys. The GitHub-reviewed upstream rating is High, CVSS 4.0 8.7 (CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:H/VA:N/SC:N/SI:N/SA:N). This is an upstream base score, not a Vision One-specific exploitability assessment. No Vision One-specific CVSS score is assigned by this notice, and no authentication, license or TLS bypass is claimed to have been demonstrated.",
     "assessment": [
+      "Revision 2026-11-12: published signed 27.3.0-rc.1 retains node-forge 1.4.3 and this older RSA correction after successful Windows workflow 43232209650. It adds a reviewed fixed release candidate, not a new RSA remediation. VO-SA-2026-004 separately covers additional Forge findings, for which stable 27.2.5 is not a fixed baseline. Existing historical evidence and stable recommendations for this RSA CVE remain unchanged.",
       "Revision 2026-11-11: published signed 27.3.0-beta.5 updates Server/PKI to node-forge 1.4.3, retaining this older RSA correction. The Windows gate and downloaded installer hash/publisher signature verification passed. Separate new certificate/Ed25519/TLS/HTTP findings are tracked in VO-SA-2026-004: earlier 1.4.2 releases are not fixes for those new issues. This RSA notice's stable remediation and older-version limitations remain unchanged.",
       "Revision 2026-11-10: signed 27.3.0-beta.4 ships node-forge 1.4.2 and passed authoritative Windows Server/PKI production audits, PKI CLI, TLS transport, certificate metadata/alarm/preservation and HTTPS Chromium regressions in workflow 42787248122. The published installer hash and publisher signature were verified. The upstream RSA correction remains included; this is a qualified fixed prerelease, not complete stable 27.3 readiness or an exploit/penetration test. Stable update recommendations and older-version review limits remain.",
       "Revision 2026-11-05: published stable 27.2.4 includes node-forge 1.4.2 in Server/PKI. The upstream 1.4.1 changelog explicitly identifies CVE-2026-85393 and requires canonical DER DigestInfo verification. Version 1.4.2 retains that correction and restores PEM Buffer compatibility. This notice is resolved for 27.2.4; older affected installations still require an update. The historical applicability evidence below does not assert successful remote exploitation.",
@@ -179,6 +187,7 @@
       "These controls remain defense in depth and are not a substitute for the patched release. Request installation-specific guidance if certificate/CSR provenance or permissions are uncertain."
     ],
     "references": [
+      { "title": "Vision One 27.3.0-rc.1 signed release candidate and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.1" },
       { "title": "Vision One 27.3.0-beta.4 signed prerelease and security audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-beta.4" },
       { "title": "Upstream node-forge 1.4.2 changelog (security corrections in 1.4.1)", "url": "https://github.com/digitalbazaar/forge/blob/v1.4.2/CHANGELOG.md" },
       { "title": "Maintainer advisory for CVE-2026-85393", "url": "https://github.com/digitalbazaar/forge/security/advisories/GHSA-2g46-22mc-6gwp" },
