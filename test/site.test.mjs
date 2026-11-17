@@ -210,8 +210,8 @@ test('the SMTP notice records mandatory TLS remediation without inventing a CVE 
   assert.equal(notice.cvss, undefined);
   assert.equal(notice.status, 'resolved');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4']);
-  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.5', '27.3.0-beta.4 (published signed prerelease)', '27.3.0-beta.5 (published signed prerelease)', '27.3.0-rc.1 (published signed release candidate)', '27.3.0-rc.2 (published signed release candidate)', '27.3.0-rc.3 (published signed release candidate)', '27.3.0-rc.4 (published signed release candidate)']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.5', '27.3.0-beta.4 (published signed prerelease)', '27.3.0-beta.5 (published signed prerelease)', '27.3.0-rc.1 (published signed release candidate)', '27.3.0-rc.2 (published signed release candidate)', '27.3.0-rc.3 (published signed release candidate)', '27.3.0-rc.4 (published signed release candidate)', '27.3.0-rc.5 (published signed release candidate)']);
   assert.equal(notice.published, '2026-10-20T13:23:33Z');
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-002/index.html'), 'utf8');
   assert.match(detail, /Not rated/);
@@ -239,13 +239,14 @@ test('security status separates the dated npm snapshot, open notices and build-t
   assert.match(page, /VO-SA-2026-002/);
   assert.match(page, /GHSA-jr5w-w6x2-84p9/);
   assert.match(page, /zero production-only application npm audit therefore does not establish that the installer is unaffected/);
-  assert.match(page, /No open or mitigated notices are listed/);
+  assert.match(page, /VO-SA-2026-006/);
   assert.match(page, /not a live vulnerability monitor/);
   assert.match(page, /not a comprehensive code audit/);
   assert.match(page, /native libraries/);
-  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 6);
+  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 11);
+  assert.equal(review.checks.find((check) => check.component === 'Client').entries, 16);
   assert.equal(review.checks.find((check) => check.component === 'Server').entries, 0);
-  assert.match(page, /not six distinct CVEs/);
+  assert.match(page, /package chains, not 16 product CVEs/);
   assert.match(page, /not that every older installation is updated/);
   assert.match(page, /VO-SA-2026-003/);
   assert.match(page, /VO-SA-2026-004/);
@@ -363,7 +364,7 @@ test('Node2Shell distinguishes corrected packaged runtime from externally manage
   assert.equal(notice.status, 'resolved');
   assert.equal(notice.severitySource, 'upstream');
   assert.deepEqual(notice.cves, ['CVE-2026-111497']);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.4', '27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.4', '27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5']);
   assert.match(notice.affected[0].fixedVersions[0], /27\.2\.5/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-003/index.html'), 'utf8');
   for (const text of ['24.22.1', '24.22.2', '22.23.4', '26.12.1', '26.13.1', '44.10.1', 'Chromium V8 15.2', 'standalone Node 24 is blocked', 'BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH', 'before many route-specific authorization checks', 'before runtime import', 'Older installers']) {
@@ -380,8 +381,8 @@ test('additional Forge findings distinguish the published beta fix from the stab
   const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-004');
   assert.equal(notice.severitySource, 'upstream');
   assert.equal(notice.cvss, undefined);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4']);
-  assert.deepEqual(notice.affected[0].fixedVersions, ['27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)', '27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)', '27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.5 (published signed release candidate; node-forge 1.4.3)']);
   assert.match(notice.remediation, /Stable-only installations should request a supported remediation plan/);
   assert.match(notice.summary, /remotely exploitable Vision One path has not been established/);
   assert.match(review.productVersion, /stable baseline 27\.2\.5 retains node-forge 1\.4\.2/);
@@ -391,7 +392,7 @@ test('additional Forge findings distinguish the published beta fix from the stab
   }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-004/);
-  assert.equal((feed.match(/<updated>2026-11-17T10:15:00Z<\/updated>/g) ?? []).length, 6);
+  assert.equal((feed.match(/<updated>2026-11-17T20:23:04Z<\/updated>/g) ?? []).length, 7);
 });
 
 test('November runtime notice distinguishes published RC qualification from product exploitability', async (t) => {
@@ -402,11 +403,11 @@ test('November runtime notice distinguishes published RC qualification from prod
   assert.equal(notice.status, 'resolved');
   assert.equal(notice.severity, 'not-rated');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4']);
+  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5']);
   assert.match(notice.affected[0].fixedVersions[0], /27\.3\.0-rc\.3/);
   assert.match(notice.remediation, /stable-only operators should coordinate supported remediation/);
-  assert.match(review.productVersion, /27\.3\.0-rc\.4/);
-  assert.match(notice.affected[0].fixedVersions.at(-1), /27\.3\.0-rc\.4/);
+  assert.match(review.productVersion, /27\.3\.0-rc\.5/);
+  assert.match(notice.affected[0].fixedVersions.at(-1), /27\.3\.0-rc\.5/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-005/index.html'), 'utf8');
   for (const text of ['43910712013', '45.3.3', '24.22.3', '8.23.0', '60-pending-reply', 'not a combined product CVSS', 'not a stable-channel patch', 'No destructive native-trigger', '26.13.1']) {
     assert.ok(detail.includes(text), `Missing November qualification: ${text}`);
@@ -423,9 +424,9 @@ test('the node-forge revision records the published fix and retains historical e
   assert.ok(notice);
   assert.equal(notice.status, 'resolved');
   assert.equal(notice.severitySource, 'upstream');
-  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4']);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.0', '27.2.1', '27.2.2', '27.2.3', '27.2.4', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5']);
   assert.deepEqual(notice.cves, ['CVE-2026-85393']);
-  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.4', '27.3.0-beta.4 (published signed prerelease)', '27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)', '27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.2.4', '27.3.0-beta.4 (published signed prerelease)', '27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)', '27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.5 (published signed release candidate; node-forge 1.4.3)']);
   assert.match(notice.affected[0].versions, /27\.2\.3 release-preparation lockfile/);
   assert.match(notice.summary, /Remote exploitability.*has not been established/);
   assert.match(notice.impact, /not a Vision One-specific/);
@@ -457,4 +458,29 @@ test('the node-forge revision records the published fix and retains historical e
     const html = await readFile(path.join(output, relative), 'utf8');
     assert.match(html, /Reviewed versions:<\/strong> 27\.2\.0 · 27\.2\.1 · 27\.2\.2/);
   }
+});
+
+test('the picomatch notice stays open and separates unpatched tooling from published runtime qualification', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-picomatch-notice-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories, review } = await buildSite({ output });
+  const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-006');
+  assert.equal(notice.status, 'open');
+  assert.equal(notice.severitySource, 'upstream');
+  assert.equal(notice.cvss, 7.5);
+  assert.deepEqual(notice.cves, ['CVE-2026-112366']);
+  assert.deepEqual(notice.affected[0].fixedVersions, []);
+  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.4', '27.3.0-rc.5']);
+  assert.match(notice.summary, /RC 5 does not fix it/);
+  const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-006/index.html'), 'utf8');
+  for (const text of ['high (upstream)', '4.0.7', 'No upstream patch', '44165315268', 'not a Vision One-specific', 'Production', 'CVE-2026-112366']) {
+    assert.ok(detail.toLowerCase().includes(text.toLowerCase()), `Missing assessed toolchain boundary: ${text}`);
+  }
+  const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
+  assert.match(page, /1 open or mitigated notice in this archive/);
+  assert.match(page, /local preflight explicitly skipped/);
+  assert.match(review.productVersion, /full Windows gate passed/);
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  assert.match(feed, /VO-SA-2026-006/);
+  assert.equal((feed.match(/<entry>/g) ?? []).length, 6);
 });
