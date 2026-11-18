@@ -519,17 +519,32 @@ test('application findings remain open and distinguish reproduction from source-
     const notice = advisories.find((entry) => entry.id === id);
     assert.ok(notice);
     assert.equal(notice.status, 'open');
-    assert.equal(notice.severity, 'not-rated');
-    assert.equal(notice.cvss, undefined);
+    const rating = {
+      'VO-SA-2026-007': ['high', 8.1, 'CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N'],
+      'VO-SA-2026-008': ['high', 7.4, 'CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N'],
+      'VO-SA-2026-009': ['medium', 6.5, 'CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:N'],
+    }[id];
+    assert.equal(notice.severity, rating[0]);
+    assert.equal(notice.cvss, rating[1]);
+    assert.equal(notice.severitySource, 'product');
+    assert.ok(notice.impact.includes(rating[2]));
+    const metrics = Object.fromEntries(rating[2].split('/').slice(1).map(item => item.split(':')));
+    const impact = 6.42 * (1 - (1 - 0.56) * (1 - 0.56));
+    const exploitability = 8.22 * 0.85 * (metrics.AC === 'L' ? 0.77 : 0.44)
+      * ({ N: 0.85, L: 0.62, H: 0.27 }[metrics.PR]) * 0.85;
+    assert.equal(Math.ceil(Math.round((impact + exploitability) * 100000) / 10000) / 10, notice.cvss);
     assert.deepEqual(notice.cves, []);
     assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.7']);
     assert.ok(notice.affected.every((entry) => entry.fixedVersions.length === 0));
-    assert.equal(notice.updated, '2026-11-18T20:21:11Z');
+    assert.equal(notice.published, '2026-11-18T20:21:11Z');
+    assert.equal(notice.updated, '2026-11-18T20:26:09Z');
     assert.ok(feed.includes(id));
     assert.ok(page.includes(id));
     const detail = await readFile(path.join(output, `advisories/${id}/index.html`), 'utf8');
     assert.match(detail, /Status: open/);
     assert.match(detail, /No fixed version listed/);
+    assert.ok(detail.includes(rating[2]));
+    assert.ok(detail.includes(`CVSS score: ${notice.cvss}`));
   }
   const byId = (id) => advisories.find((entry) => entry.id === id);
   assert.match(byId('VO-SA-2026-007').assessment.join(' '), /Both security regressions.*failed/);
