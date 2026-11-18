@@ -3,36 +3,39 @@
     "id": "VO-SA-2026-006",
     "title": "picomatch repeated-extglob ReDoS: build-tool applicability",
     "published": "2026-11-17T20:23:04Z",
-    "updated": "2026-11-18T09:53:35Z",
+    "updated": "2026-11-18T16:14:04Z",
     "severity": "high",
     "severitySource": "upstream",
     "cvss": 7.5,
-    "status": "open",
+    "status": "withdrawn",
     "reviewedVersions": ["27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6"],
-    "summary": "The updated upstream picomatch advisory includes 4.0.7, the unchanged glob matcher resolved by Vision One's Client and Electron build/test/packaging toolchains. No upstream patched version was available at review. This is a build-tool dependency finding, not a demonstrated unauthenticated Vision One runtime exploit. Published signed RC 6 does not fix it.",
+    "summary": "GitHub withdrew picomatch GHSA-fc5q-39xc-vjpf on 2026-11-18 at 15:38:56Z. The linked maintainer disputes the vulnerability classification of attacker-supplied regex-like glob patterns. This notice is retained as withdrawn, not resolved by a Vision One or package patch. Fresh npm audits still report the prior build-chain entries; published RC 6 does not fix them. Keep build/test/packaging pattern sources and inputs trusted.",
     "affected": [
       {
         "product": "Vision One Client and Electron build, test and packaging environments",
-        "versions": "The reviewed RC-4, RC-5 and RC-6 dependency baselines resolve picomatch 4.0.7 in Angular/Vite/Vitest and electron-builder/rebuild/node-gyp glob processing. The upstream reviewed range is <=4.0.7. This notice does not establish a complete earlier-product affected range or a remotely exploitable installed-runtime path.",
+        "versions": "The reviewed RC-4, RC-5 and RC-6 dependency baselines resolve picomatch 4.0.7 in Angular/Vite/Vitest and electron-builder/rebuild/node-gyp glob processing. The now-withdrawn advisory listed <=4.0.7; this is historical reported scope, not a current confirmed vulnerable range. No complete earlier-product affected range or remotely exploitable installed-runtime path is established.",
         "fixedVersions": [],
-        "action": "Keep source/build inputs and glob patterns trusted, isolate build/test/packaging services from untrusted access, and monitor upstream for a supported patch. RC 6 is not a fix. Do not apply incompatible Angular/electron-builder downgrades or replace packaged runtime libraries as a workaround."
+        "action": "Keep source/build inputs and glob patterns trusted and isolate build/test/packaging services from untrusted access. Record the upstream withdrawal separately from continuing npm audit results. RC 6 is not a fix; no replacement package was qualified for this notice. Do not apply incompatible Angular/electron-builder downgrades or replace packaged runtime libraries."
       }
     ],
     "impact": "CVE-2026-112366 / GHSA-fc5q-39xc-vjpf describes regular-expression denial of service through single-branch repeated extglobs. The upstream High CVSS 3.1 score is 7.5 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H). This is the upstream score, not a Vision One-specific exposure rating. Product reachability and impact depend on an attacker supplying patterns to an affected matcher; no customer attack or installed-runtime exploit was demonstrated.",
     "assessment": [
+      "Revision 2026-11-18 16:14 UTC: GitHub's live advisory API records withdrawn_at 2026-11-18T15:38:56Z and updated_at 15:38:58Z, with no first patched version. Its linked maintainer comment disputes the vulnerability classification and advises against accepting untrusted regex-like glob patterns. The API description contains inconsistent wording; this assessment records the explicit withdrawal and linked explanation rather than inventing remediation or a safe-pattern guarantee. The original ID/publication, historical upstream High score and prior release/audit evidence are retained. Status withdrawn is distinct from resolved by an updated product.",
+      "Fresh full npm audits on 2026-11-18 after the withdrawal still report Client 16 high and App six high/five moderate package/dependent-chain entries, with Server/Shared/PKI/worker/Manual and reviewed production-only scopes zero. These are actual registry results, not silently replaced by zero after withdrawal. The unchanged package baseline was not patched by this classification change. npm metadata, native runtime assessment and trusted-build-input controls remain separate.",
       "Revision 2026-11-18: signed RC 6 was published at 09:52:30Z after complete Windows workflow 44277559223 passed on a9cd5f67e07ef547dac9fbbacbb344348c15ea1b. Downloaded installer SHA-256 0b141ce4cb0a13796f3e4bafb1643e9a3d2ef19a52de89dc73d28fac21acd2bf matches checksum/GitHub digest; Authenticode is Valid and notes/audit match release sources. Fresh full audits retain Client 16 high and App six high/five moderate build-chain entries; reviewed production-only scopes are zero. Upstream still lists no patched version. This extends reviewed published scope, not remediation; the notice remains open.",
       "Review 2026-11-17: the GitHub advisory revision at 15:56:44Z reports <=4.0.7 and no first patched version. npm latest was 4.0.7. Earlier clean audits are dated historical evidence, not proof that the unchanged dependency is now fixed. No dependency version or forced override was changed for RC 5.",
       "Fresh complete npm audits report 16 high Client dependent/package entries and six high plus five moderate App entries. The High chains trace to picomatch; App also retains the separate minimatch build-chain finding. These are dependency-chain counts, not 22 distinct vulnerabilities. Server, Shared, PKI, Client worker and Manual full audits are zero. Additional Client/App production-only audits are zero, as are Server/PKI production scopes.",
       "npm dependency-tree review identifies Angular Devkit/build, Parcel watcher, Vite, Vitest, tinyglobby/fdir and electron-builder's rebuild/node-gyp chain as consumers. This is a bounded build-tool assessment, not proof about all dynamic integrations. Electron itself is dev-declared but shipped and remains separately reviewed in VO-SA-2026-005; production-only npm counts alone do not qualify every native executable.",
       "Signed RC 5 was published at 2026-11-17T20:20:56Z after complete Windows workflow 44165315268 passed from 9229910c1a8cf192ca46095639d0dc8fd88ef62a, including the full canonical release gate, signing and final artifact verification. The downloaded installer SHA-256 8edfecf42bdf3c959e13d9fcf9f5199a81c94e20d2abed42dbd3bbfe4f229821 matches SHA256SUMS.txt and the GitHub digest; release notes and attached audit match checked sources. CI reports valid Authenticode on all required Windows artifacts. Passing the gate or signing the installer does not fix this open dependency finding."
     ],
-    "remediation": "No upstream patch was available at the review timestamp. Monitor the advisory and qualify a compatible supported correction when released. Restrict build/test/packaging inputs, pattern sources and service access. An unsupported toolchain downgrade, a clean production-only audit or RC-6 installation is not a verified fix. Existing runtime deployment and maintenance controls remain applicable.",
+    "remediation": "No upstream patch or Vision One fix is claimed: the upstream advisory was withdrawn, not repaired by a version update. Preserve the historical finding and current npm audit discrepancy, monitor supported toolchain updates and restrict build/test/packaging inputs, pattern sources and service access. An unsupported downgrade or a clean production-only audit is not a native/runtime safety assessment. Existing deployment and maintenance controls remain applicable.",
     "workarounds": [
       "Do not accept untrusted glob patterns, source trees or build configuration in the affected build/test/packaging services. Restrict their network and account access.",
       "Keep CI/build and maintenance environments separate from plant runtime. These restrictions reduce exposure but are not a validated universal workaround for every matcher consumer."
     ],
     "references": [
       { "title": "GitHub upstream advisory and patch status", "url": "https://github.com/advisories/GHSA-fc5q-39xc-vjpf" },
+      { "title": "Upstream maintainer explanation linked by the withdrawal", "url": "https://github.com/micromatch/picomatch/pull/235#issuecomment-6315749381" },
       { "title": "Published signed RC 5 and release-time Security Audit", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.5" },
       { "title": "Authoritative RC-5 Windows release workflow", "url": "https://github.com/ENCO-OHG/vision-one/actions/runs/44165315268" }
     ],

@@ -298,6 +298,7 @@ test('status badges preserve readable labels and share tones across tables and d
     ['open', 'high', 'danger'], ['open', 'medium', 'warning'],
     ['open', 'low', 'warning'], ['open', 'informational', 'neutral'],
     ['open', 'not-rated', 'neutral'],
+    ['withdrawn', 'high', 'withdrawn'],
   ];
   const advisories = cases.map(([status, severity], index) => ({
     ...example(), id: `VO-SA-2026-${String(index + 1).padStart(3, '0')}`, status, severity,
@@ -392,7 +393,9 @@ test('additional Forge findings distinguish the published beta fix from the stab
   }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-004/);
-  assert.equal((feed.match(/<updated>2026-11-18T09:53:35Z<\/updated>/g) ?? []).length, 7);
+  const revisions = advisories.map((advisory) => advisory.updated);
+  assert.deepEqual([...feed.matchAll(/<updated>([^<]+)<\/updated>/g)].map((match) => match[1]).sort(),
+    [revisions.toSorted().at(-1), ...revisions].sort());
 });
 
 test('November runtime notice distinguishes published RC qualification from product exploitability', async (t) => {
@@ -460,24 +463,27 @@ test('the node-forge revision records the published fix and retains historical e
   }
 });
 
-test('the picomatch notice stays open and separates unpatched tooling from published runtime qualification', async (t) => {
+test('the withdrawn picomatch notice retains history without claiming a package or product fix', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-picomatch-notice-'));
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories, review } = await buildSite({ output });
   const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-006');
-  assert.equal(notice.status, 'open');
+  assert.equal(notice.status, 'withdrawn');
   assert.equal(notice.severitySource, 'upstream');
   assert.equal(notice.cvss, 7.5);
   assert.deepEqual(notice.cves, ['CVE-2026-112366']);
   assert.deepEqual(notice.affected[0].fixedVersions, []);
   assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6']);
-  assert.match(notice.summary, /RC 6 does not fix it/);
+  assert.match(notice.summary, /RC 6 does not fix them/);
+  assert.match(notice.summary, /15:38:56Z/);
+  assert.equal(notice.published, '2026-11-17T20:23:04Z');
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-006/index.html'), 'utf8');
-  for (const text of ['high (upstream)', '4.0.7', 'No upstream patch', '44165315268', 'not a Vision One-specific', 'Production', 'CVE-2026-112366']) {
+  for (const text of ['high (upstream)', '4.0.7', 'No upstream patch', '44165315268', 'not a Vision One-specific', 'Production', 'CVE-2026-112366', 'Status: withdrawn', 'not a current confirmed vulnerable range']) {
     assert.ok(detail.toLowerCase().includes(text.toLowerCase()), `Missing assessed toolchain boundary: ${text}`);
   }
   const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
-  assert.match(page, /1 open or mitigated notice in this archive/);
+  assert.match(page, /0 open or mitigated notices in this archive/);
+  assert.match(page, /Withdrawal is not a package patch or a product fix/);
   assert.match(page, /local preflight explicitly skipped/);
   assert.match(review.productVersion, /full Windows gate passed/);
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
