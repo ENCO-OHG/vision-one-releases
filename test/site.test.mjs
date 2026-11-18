@@ -482,21 +482,22 @@ test('the withdrawn picomatch notice retains history without claiming a package 
     assert.ok(detail.toLowerCase().includes(text.toLowerCase()), `Missing assessed toolchain boundary: ${text}`);
   }
   const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
-  assert.match(page, /0 open or mitigated notices in this archive/);
+  assert.match(page, /3 open or mitigated notices in this archive/);
   assert.match(page, /Withdrawal is not a package patch or a product fix/);
   assert.match(page, /local preflight explicitly skipped/);
   assert.match(review.productVersion, /full Windows gate passed/);
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-006/);
-  assert.equal((feed.match(/<entry>/g) ?? []).length, 6);
+  assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
 });
 
 test('RC-7 publication extends all six reviewed scopes while preserving withdrawal and stable boundaries', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-rc7-review-'));
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories, review } = await buildSite({ output });
-  assert.equal(advisories.length, 6);
-  for (const advisory of advisories) {
+  const originalNotices = advisories.filter((advisory) => Number(advisory.id.split('-').at(-1)) <= 6);
+  assert.equal(originalNotices.length, 6);
+  for (const advisory of originalNotices) {
     assert.ok(advisory.reviewedVersions.includes('27.3.0-rc.7'));
     assert.equal(advisory.updated, review.reviewedAt);
     assert.ok(advisory.assessment.some((paragraph) => paragraph.includes('44344735750')));
@@ -506,4 +507,36 @@ test('RC-7 publication extends all six reviewed scopes while preserving withdraw
   const withdrawn = advisories.find((advisory) => advisory.status === 'withdrawn');
   assert.equal(withdrawn.id, 'VO-SA-2026-006');
   assert.deepEqual(withdrawn.affected[0].fixedVersions, []);
+});
+
+test('application findings remain open and distinguish reproduction from source-only evidence', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-application-notices-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories, review } = await buildSite({ output });
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
+  for (const id of ['VO-SA-2026-007', 'VO-SA-2026-008', 'VO-SA-2026-009']) {
+    const notice = advisories.find((entry) => entry.id === id);
+    assert.ok(notice);
+    assert.equal(notice.status, 'open');
+    assert.equal(notice.severity, 'not-rated');
+    assert.equal(notice.cvss, undefined);
+    assert.deepEqual(notice.cves, []);
+    assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.7']);
+    assert.ok(notice.affected.every((entry) => entry.fixedVersions.length === 0));
+    assert.equal(notice.updated, '2026-11-18T20:21:11Z');
+    assert.ok(feed.includes(id));
+    assert.ok(page.includes(id));
+    const detail = await readFile(path.join(output, `advisories/${id}/index.html`), 'utf8');
+    assert.match(detail, /Status: open/);
+    assert.match(detail, /No fixed version listed/);
+  }
+  const byId = (id) => advisories.find((entry) => entry.id === id);
+  assert.match(byId('VO-SA-2026-007').assessment.join(' '), /Both security regressions.*failed/);
+  assert.match(byId('VO-SA-2026-007').impact, /not a demonstrated anonymous password bypass/);
+  assert.match(byId('VO-SA-2026-008').assessment.join(' '), /not a demonstrated network interception attack/);
+  assert.match(byId('VO-SA-2026-009').assessment.join(' '), /not a newly executed end-to-end password-reset exploit test/);
+  assert.match(byId('VO-SA-2026-009').impact, /does not preserve roles that have been removed/);
+  assert.match(review.checks.find((check) => check.component === 'Server').assessment, /no new npm audit/);
+  assert.equal(review.reviewedAt, '2026-11-18T16:33:36Z', 'preserve the original dependency-review timestamp');
 });

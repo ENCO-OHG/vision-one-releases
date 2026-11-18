@@ -1,5 +1,104 @@
 [
   {
+    "id": "VO-SA-2026-009",
+    "title": "Password changes do not fully revoke existing sessions",
+    "published": "2026-11-18T20:21:11Z",
+    "updated": "2026-11-18T20:21:11Z",
+    "severity": "not-rated",
+    "status": "open",
+    "reviewedVersions": ["27.3.0-rc.7"],
+    "summary": "The reviewed session-refresh path can renew a still-valid session token after a password change or reset without requiring the new password or MFA again. Password reset must not be treated as complete containment of a compromised session. No fixed product version is available for this finding.",
+    "affected": [
+      {
+        "product": "Vision One Server authentication and session refresh",
+        "versions": "Confirmed by source review of the 27.3.0-rc.7 tag and matching current authentication paths. Earlier versions and the complete affected range have not been established and must not be assumed unaffected. No customer installation was tested.",
+        "fixedVersions": [],
+        "action": "If a session token may be compromised, do not rely on password reset or local logout alone. Isolate access to the affected runtime through approved network and maintenance procedures and contact EN-CO for coordinated session containment and remediation. Preserve evidence; avoid ad hoc database or signing-key changes."
+      }
+    ],
+    "impact": "A holder of a still-valid token for an existing account may retain access by refreshing it after password reset. This does not preserve roles that have been removed: refreshed sessions load current roles, and deleted users cannot refresh. The reviewed login-lockout mechanism also does not revoke existing tokens, and local idle/manual logout removes client state without server-side per-session revocation. No customer compromise, assigned CVE or product-specific severity/CVSS assessment is claimed.",
+    "assessment": [
+      "Review 2026-11-18: password changes and resets increment the central authentication revision, so subsequent protected API calls reject the old token. The refresh guard intentionally accepts an older revision if signature and expiry remain valid; the refresh API then loads the existing user and issues a new full session. This restores access without verifying the changed password or completing MFA again. This is a source-confirmed revocation gap, not a newly executed end-to-end password-reset exploit test.",
+      "The relevant authentication API, JWT middleware, user-runtime and client logout paths match the published 27.3.0-rc.7 source tag. The login API explicitly issues seven-day session tokens; the generic token lifetime setting is not the effective limit for these tokens. Refresh issues another token without a demonstrated original-session absolute lifetime bound in the reviewed path.",
+      "Role removal and user deletion remain distinct and effective boundaries in the reviewed API flow: a refreshed token receives current roles and a deleted account cannot refresh. Already executing operations, all socket paths, administrative account-disable behavior and earlier releases are not comprehensively qualified by this assessment. The separate pre-MFA token-purpose defect is VO-SA-2026-007."
+    ],
+    "remediation": "No released fix is claimed. A correction must distinguish current-role refresh from security-driven session revocation, enforce the intended password-reset and logout containment policy, and qualify the behavior with targeted regression tests before publication of a fixed release.",
+    "workarounds": [
+      "Restrict runtime reachability to approved OT segments and authenticated VPN/access gateways. Remove suspected access at those independently enforced boundaries while supported session containment is coordinated. These measures reduce exposure; they do not repair session revocation.",
+      "Preserve relevant authentication and access logs. Password reset remains useful for protecting future password logins, but is not a validated way to terminate every already issued session in the reviewed version."
+    ],
+    "references": [
+      { "title": "Reviewed published release candidate 27.3.0-rc.7", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.7" }
+    ],
+    "cves": []
+  },
+  {
+    "id": "VO-SA-2026-008",
+    "title": "OPC UA client automatically trusts unknown server certificates",
+    "published": "2026-11-18T20:21:11Z",
+    "updated": "2026-11-18T20:21:11Z",
+    "severity": "not-rated",
+    "status": "open",
+    "reviewedVersions": ["27.3.0-rc.7"],
+    "summary": "The reviewed encrypted OPC UA client path relies on a library certificate-manager default that automatically trusts previously untrusted server certificates. Encryption therefore does not establish that the peer was explicitly approved during commissioning. No fixed product version is available for this finding.",
+    "affected": [
+      {
+        "product": "Vision One OPC UA client connections, including the S7-1500 integration",
+        "versions": "The 27.3.0-rc.7 source driver and dependency lockfile match the reviewed local path using node-opcua-client 2.175.6. The locally installed certificate-manager implementation was inspected. No live PLC or published installer connection test was performed; earlier versions and the complete affected range remain unassessed.",
+        "fixedVersions": [],
+        "action": "Restrict OPC UA traffic to the intended PLC endpoints and trusted network paths. Review deployed peer identities and trust changes through the commissioning process. Do not treat the certificate inventory or expiry alarms as an enforced approval step. Coordinate a supported strict-trust correction with EN-CO; do not disable encryption or replace packaged modules."
+      }
+    ],
+    "impact": "An attacker able to redirect or intercept the OPC UA connection and present a certificate accepted by this automatic-trust path may impersonate the intended server. This can expose operational traffic, commands or authentication exchanges to an unintended peer, depending on the protocol and server configuration. This is not an assertion that arbitrary malformed, expired or otherwise invalid certificates all pass, nor evidence of credential capture or a customer attack. No CVE or product-specific severity/CVSS assessment is assigned.",
+    "assessment": [
+      "Source review 2026-11-18: when device encryption is enabled, Vision One selects SignAndEncrypt with Basic256Sha256. It creates the OPC UA client without an explicit restrictive certificate manager. The inspected node-opcua-client default uses a certificate manager with automaticallyAcceptUnknownCertificate enabled.",
+      "The inspected manager changes BadCertificateUntrusted to trusted and returns success. It also accepts an unknown revocation status in this auto-accept path. Other certificate verification failures are not thereby declared accepted. This is a concrete library-default and application-configuration finding, not a demonstrated network interception attack or a general upstream vulnerability claim.",
+      "Vision One observes certificate metadata after connection for inventory and expiry monitoring. That observation does not require prior operator approval or prove an enforced binding to a previously commissioned PLC certificate. Encryption plus username authentication must not be represented as complete peer-identity assurance under this default."
+    ],
+    "remediation": "No released fix is claimed. Establish an explicit restrictive trust policy, controlled initial provisioning and approved certificate replacement, with appropriate chain/revocation and offline behavior. Qualify normal connection, unknown peer, changed certificate and invalid certificate cases before deploying a corrected release.",
+    "workarounds": [
+      "Use independently enforced OT network segmentation and restrict connectivity to the intended PLC endpoints. Protect routing, name resolution and commissioning access. These are exposure reductions, not a validated replacement for certificate identity enforcement.",
+      "Retain signing and encryption and investigate unexpected peer-certificate changes. Manual comparison alone is not a product-enforced block on an unapproved replacement certificate."
+    ],
+    "references": [
+      { "title": "Reviewed published release candidate 27.3.0-rc.7", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.7" }
+    ],
+    "cves": []
+  },
+  {
+    "id": "VO-SA-2026-007",
+    "title": "Login MFA and mandatory enrollment can be bypassed through session refresh",
+    "published": "2026-11-18T20:21:11Z",
+    "updated": "2026-11-18T20:21:11Z",
+    "severity": "not-rated",
+    "status": "open",
+    "reviewedVersions": ["27.3.0-rc.7"],
+    "summary": "An isolated test confirms that login MFA and required TOTP enrollment can be bypassed through insufficient token-purpose separation in session refresh. A pre-authentication intermediate token can become a full session without completing TOTP. No fixed product version is available for this finding.",
+    "affected": [
+      {
+        "product": "Vision One Server login MFA, TOTP enrollment and session refresh",
+        "versions": "The relevant authentication API and JWT middleware in the published 27.3.0-rc.7 source tag match the tested current paths. Reproduction used real API/guard classes with simulated users, not a customer installation or downloaded installer. Earlier releases and the complete affected range have not been established and must not be assumed unaffected.",
+        "fixedVersions": [],
+        "action": "Do not rely on application login MFA alone as the access boundary in the reviewed version. Restrict runtime reachability through independently enforced OT segmentation and VPN/access-gateway authentication, protect primary credentials and contact EN-CO for a supported remediation plan. Do not disable MFA or replace packaged authentication files."
+      }
+    ],
+    "impact": "A party holding a valid login-MFA or required-enrollment intermediate token can obtain the account's full session without completing the second factor. Obtaining that intermediate token through normal login first requires successful primary authentication; this is not a demonstrated anonymous password bypass. Resulting access is bounded by the account's current roles, potentially including administration. Separate action-specific TOTP checks are not established as bypassed by this test. No active exploitation, customer compromise, assigned CVE or product-specific severity/CVSS score is claimed.",
+    "assessment": [
+      "Reproduced 2026-11-18 using an isolated loopback HTTP harness with the real authentication API, JWT middleware and role guards and a simulated user backend. No customer accounts, production data, external services or valid user secrets were used. The intermediate tokens were issued by the real login API after the simulated backend returned MFA-required or enrollment-required status.",
+      "Both intermediate tokens were rejected directly by the protected test administration endpoint, but session refresh returned a full session accepted by that same endpoint. No TOTP verification or enrollment-confirmation call occurred. Three control checks passed: normal full-session refresh, rejection of invalid/expired tokens and rejection of refresh for a nonexistent user. Both security regressions requiring intermediate-token rejection failed. Test compilation passed; the security test exited with code 1. A previously successful release gate does not override this new failing evidence.",
+      "The refresh guard validates signature and expiry but does not establish that a token represents completed authentication before issuing a new full session. Token-purpose separation and all consumers of intermediate/action tokens require review. No product fix was implemented or published in this assessment; the local reproduction does not establish the complete historical affected range."
+    ],
+    "remediation": "No released fix is claimed. Correct refresh authentication to accept only appropriately authenticated session tokens and reject pre-MFA/enrollment tokens. Retain targeted negative regressions and normal-session controls, assess other token purposes and publish a qualified corrected release before naming any version as fixed.",
+    "workarounds": [
+      "Use independently enforced authenticated VPN/access-gateway controls and restrict who can reach the runtime. These controls reduce exposure but do not repair the application MFA defect or protect against an already authorized network peer with compromised primary credentials.",
+      "Keep individual least-privilege accounts, protect primary credentials and review suspicious authentication/access activity. Do not assume password reset alone revokes an existing session; the separate session-revocation finding is VO-SA-2026-009."
+    ],
+    "references": [
+      { "title": "Reviewed published release candidate 27.3.0-rc.7", "url": "https://github.com/ENCO-OHG/vision-one-releases/releases/tag/27.3.0-rc.7" }
+    ],
+    "cves": []
+  },
+  {
     "id": "VO-SA-2026-006",
     "title": "picomatch repeated-extglob ReDoS: build-tool applicability",
     "published": "2026-11-17T20:23:04Z",
