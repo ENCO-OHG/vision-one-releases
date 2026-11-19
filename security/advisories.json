@@ -158,6 +158,7 @@
   },
   {
     "id": "VO-SA-2026-005",
+    "versionSummary": "Prerelease fix from 27.3.0-rc.3; external Node.js requires a separate update.",
     "title": "November Node/Electron corrections and WebSocket pending-Pong applicability",
     "published": "2026-11-16T17:03:00Z",
     "updated": "2026-11-18T16:33:36Z",
@@ -207,6 +208,7 @@
   },
   {
     "id": "VO-SA-2026-004",
+    "versionSummary": "Prerelease fix from 27.3.0-beta.5; stable 27.2.5 remains affected.",
     "title": "node-forge 1.4.3 corrections: certificate, Ed25519 and TLS/HTTP applicability",
     "published": "2026-11-11T09:22:43Z",
     "updated": "2026-11-18T16:33:36Z",
@@ -261,6 +263,7 @@
   },
   {
     "id": "VO-SA-2026-003",
+    "versionSummary": "Startup protection from 27.2.5; packaged decoder confirmed corrected in 27.2.4. External Node.js must be updated separately.",
     "title": "Node2Shell: Brotli runtime applicability and external Node.js updates",
     "published": "2026-11-05T08:51:24Z",
     "updated": "2026-11-18T16:33:36Z",
@@ -320,6 +323,7 @@
   },
   {
     "id": "VO-SA-2026-002",
+    "versionSummary": "Affected: 27.2.0–27.2.4 · Fixed from 27.2.5.",
     "title": "SMTP certificate verification is disabled by default",
     "published": "2026-10-20T13:23:33Z",
     "updated": "2026-11-18T16:33:36Z",
@@ -374,6 +378,7 @@
   },
   {
     "id": "VO-SA-2026-001",
+    "versionSummary": "Reviewed affected: 27.2.0–27.2.3 · Fixed from 27.2.4.",
     "title": "node-forge RSA signature verification: Vision One applicability assessment",
     "published": "2026-10-20T11:38:04Z",
     "updated": "2026-11-18T16:33:36Z",

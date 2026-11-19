@@ -38,6 +38,8 @@ Optional `severitySource` is `product` (the default) or `upstream`. Use `upstrea
 
 Optional `reviewedVersions` is a nonempty array of distinct version labels. It displays a compact **Reviewed versions** line below the advisory title on the home page and in the archive. Populate it from the actual review scope, not by inferring ranges from prose. It does not declare confirmed product exploitability or imply that unlisted versions are unaffected; the full `affected` and `assessment` text remains authoritative. Adding this presentation metadata without changing the assessment does not, by itself, require a new technical revision timestamp.
 
+Optional `versionSummary` is a nonempty plain-text summary displayed instead of the enumerated review list in advisory tables. Prefer concise assessed ranges and the first fixed release for resolved notices, while retaining prerelease/stable and external-runtime limitations. Do not infer an unknown first fixed release or affected range. Historical `reviewedVersions`, technical assessment and evidence remain unchanged. Presentation-only summaries do not advance the advisory's technical revision timestamp.
+
 All strings are rendered as text, not Markdown or HTML. Only HTTPS reference URLs without embedded credentials are accepted. Per-advisory pages and the Atom feed are generated from this single source to avoid divergent copies.
 
 ## Deployment and privacy
@@ -47,6 +49,8 @@ All strings are rendered as text, not Markdown or HTML. Only HTTPS reference URL
 `status.json` provides the dated review snapshot at `/security-status/`. It records the reviewed product version and scoped npm audit package-entry counts. The page derives its open-notice list from the advisory records; it does not treat a dependency count as a product exploit count. `/deployment/` provides baseline operating guidance and is not an exhaustive security checklist.
 
 For each product release, recheck the open notices against that release's manifests and relevant source paths. Run the documented audits for the reviewed checkout before updating `reviewedAt`, `productVersion` or counts. Keep build-tool findings distinct from production npm findings, explain duplicated dependency-chain entries, and record the limits of native-component and application-code coverage. Do not advance the review date automatically during a website build. A website content change does not alter a previously attached release audit or close an advisory.
+
+Resolved notices retain their established fix baseline and historical revision date. Do not append every new release to their version lists or add repetitive reassessment paragraphs solely because another release ships. Reopen their assessment only for concrete regression indications or material new evidence; document any resulting technical revision normally.
 
 If a review changes an advisory's scope, impact or remedy, retain its ID and original publication date, update its revision timestamp, and document the material revision. The Atom feed then exposes the revised entry. Updating a product version alone never establishes that an open finding has been fixed. Do not upload raw audit evidence containing private paths, credentials or customer data.
 

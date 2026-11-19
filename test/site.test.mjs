@@ -305,14 +305,21 @@ test('status badges preserve readable labels and share tones across tables and d
   }));
   const output = await fixtureSite(t, advisories);
   const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
-  for (const [index, [status, , tone]] of cases.entries()) {
+  for (const [index, [status, severity, tone]] of cases.entries()) {
     assert.ok(archive.includes(`<span class="status-badge ${tone}">${status}</span>`));
     const detail = await readFile(path.join(output, `advisories/${advisories[index].id}/index.html`), 'utf8');
     assert.ok(detail.includes(`<span class="status-badge ${tone}">Status: ${status}</span>`));
+    const severityClass = `severity ${severity}${status === 'resolved' ? ' resolved' : ''}`;
+    const label = severity === 'not-rated' ? 'Not rated' : severity;
+    for (const page of [archive, detail]) assert.ok(page.includes(`<span class="${severityClass}">${label}</span>`));
   }
   for (const relative of ['index.html', 'security-status/index.html']) {
     assert.match(await readFile(path.join(output, relative), 'utf8'), /class="status-badge /);
   }
+  const stylesheet = archive.match(/site\.[a-f0-9]{12}\.css/)?.[0];
+  const css = await readFile(path.join(output, stylesheet), 'utf8');
+  assert.match(css, /\.severity\.resolved\s*\{\s*background:\s*#d9f3e4;\s*color:\s*#14532d;/);
+  assert.ok(css.indexOf('.severity.resolved') > css.indexOf('.severity.high'));
 });
 
 test('assessed entries generate escaped detail pages and consistent archive/feed ordering', async (t) => {
@@ -459,7 +466,7 @@ test('the node-forge revision records the published fix and retains historical e
   assert.doesNotMatch(detail, /No product advisories published yet/);
   for (const relative of ['index.html', 'advisories/index.html']) {
     const html = await readFile(path.join(output, relative), 'utf8');
-    assert.match(html, /Reviewed versions:<\/strong> 27\.2\.0 · 27\.2\.1 · 27\.2\.2/);
+    assert.match(html, /Versions:<\/strong> Reviewed affected: 27\.2\.0–27\.2\.3 · Fixed from 27\.2\.4\./);
   }
 });
 
@@ -489,6 +496,46 @@ test('the withdrawn picomatch notice retains history without claiming a package 
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-006/);
   assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
+});
+
+test('compact version summaries replace review lists without losing historical evidence', async (t) => {
+  const advisory = { ...example(), reviewedVersions: ['old-baseline', 'later-reviewed-baseline'],
+    versionSummary: 'Affected: <old> · Fixed from 27.2.4 & later supported releases.' };
+  const output = await fixtureSite(t, [advisory]);
+  for (const relative of ['index.html', 'advisories/index.html']) {
+    const html = await readFile(path.join(output, relative), 'utf8');
+    assert.ok(html.includes(`<strong>Versions:</strong> ${escape(advisory.versionSummary)}`));
+    assert.doesNotMatch(html, /old-baseline|later-reviewed-baseline|<old>/);
+  }
+  const detail = await readFile(path.join(output, `advisories/${advisory.id}/index.html`), 'utf8');
+  assert.match(detail, /test-fixed/);
+  const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
+  assert.ok(feed.includes(`<updated>${advisory.updated}</updated>`));
+  for (const versionSummary of ['', ' ', 42, null, []]) {
+    assert.throws(() => validate(config, [{ ...example(), versionSummary }]), /versionSummary/);
+  }
+});
+
+test('resolved notice summaries retain fix-channel boundaries and do not manufacture new revisions', async (t) => {
+  const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-compact-resolved-'));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const { advisories } = await buildSite({ output });
+  const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
+  const resolved = advisories.filter(entry => entry.status === 'resolved');
+  assert.equal(resolved.length, 5);
+  for (const notice of resolved) {
+    assert.ok(notice.versionSummary);
+    assert.ok(archive.includes(escape(notice.versionSummary)));
+    assert.ok(notice.reviewedVersions.includes('27.3.0-rc.7'), 'retain historical review evidence');
+    assert.equal(notice.updated, '2026-11-18T16:33:36Z', 'presentation does not create a technical reassessment');
+    assert.ok(!archive.includes(`<strong>Reviewed versions:</strong> ${notice.reviewedVersions.join(' · ')}`));
+  }
+  const byId = id => advisories.find(entry => entry.id === id);
+  assert.match(byId('VO-SA-2026-001').versionSummary, /Fixed from 27\.2\.4/);
+  assert.match(byId('VO-SA-2026-002').versionSummary, /Fixed from 27\.2\.5/);
+  assert.match(byId('VO-SA-2026-003').versionSummary, /confirmed corrected.*27\.2\.4.*separately/);
+  assert.match(byId('VO-SA-2026-004').versionSummary, /Prerelease.*beta\.5; stable 27\.2\.5 remains affected/);
+  assert.match(byId('VO-SA-2026-005').versionSummary, /Prerelease.*rc\.3; external Node\.js/);
 });
 
 test('RC-7 publication extends all six reviewed scopes while preserving withdrawal and stable boundaries', async (t) => {

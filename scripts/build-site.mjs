@@ -39,6 +39,7 @@ export function validate(config, advisories) {
     for (const field of ['title', 'summary', 'impact', 'remediation']) text(advisory[field], field);
     if (!['critical', 'high', 'medium', 'low', 'informational', 'not-rated'].includes(advisory.severity)) throw new Error('Invalid severity');
     if (advisory.severitySource !== undefined && !['upstream', 'product'].includes(advisory.severitySource)) throw new Error('Invalid severity source');
+    if (advisory.versionSummary !== undefined) text(advisory.versionSummary, 'versionSummary');
     if (advisory.reviewedVersions !== undefined) {
       if (!Array.isArray(advisory.reviewedVersions) || !advisory.reviewedVersions.length) throw new Error('reviewedVersions must be a nonempty version array');
       advisory.reviewedVersions.forEach((version) => text(version, 'reviewed version'));
@@ -81,6 +82,7 @@ const advisoryPath = (advisory) => `advisories/${advisory.id}/`;
 const url = (config, relative = '') => new URL(relative, config.baseUrl).href;
 const list = (items) => `<ul>${items.map((item) => `<li>${escape(item)}</li>`).join('')}</ul>`;
 const severityLabel = (advisory) => `${advisory.severity === 'not-rated' ? 'Not rated' : advisory.severity}${advisory.severitySource === 'upstream' ? ' (upstream)' : ''}`;
+const severityBadge = (advisory) => `<span class="severity ${advisory.severity}${advisory.status === 'resolved' ? ' resolved' : ''}">${escape(severityLabel(advisory))}</span>`;
 const statusBadge = (advisory, detailed = false) => {
   const tone = advisory.status === 'open'
     ? (['critical', 'high'].includes(advisory.severity) ? 'danger' : ['medium', 'low'].includes(advisory.severity) ? 'warning' : 'neutral')
@@ -109,9 +111,15 @@ function layout(config, title, content, relative = '') {
 </div><div class="footer-bottom"><p class="fine-print">Hosted on GitHub Pages. No analytics, advertising scripts or third-party fonts are used by this site. GitHub may process connection data under its <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">privacy statement</a>.</p><p class="footer-copyright">© ${escape(config.reviewed.slice(0, 4))} EN-CO OHG<br><a href="${escape(config.repository)}/blob/main/LICENSE">License &amp; terms</a></p></div></div></footer></body></html>`;
 }
 
+function versionSummary(advisory) {
+  if (advisory.versionSummary !== undefined) return `<p class="advisory-versions"><strong>Versions:</strong> ${escape(advisory.versionSummary)}</p>`;
+  if (advisory.reviewedVersions) return `<p class="advisory-versions"><strong>Reviewed versions:</strong> ${advisory.reviewedVersions.map(escape).join(' · ')}</p>`;
+  return '';
+}
+
 function advisoryTable(config, advisories) {
   if (!advisories.length) return `<div class="empty-state"><span class="empty-mark" aria-hidden="true">i</span><div><h3>No product advisories published yet</h3><p>This archive has not yet published a product-specific advisory. An empty archive does not mean that Vision One or its dependencies are free of vulnerabilities. Release security audits may document additional known risks.</p></div></div>`;
-  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Security advisories"><table><thead><tr><th>Advisory</th><th>Severity</th><th>Status</th><th>Updated (UTC)</th></tr></thead><tbody>${advisories.map((advisory) => `<tr><td><a href="${escape(url(config, advisoryPath(advisory)))}"><small>${escape(advisory.id)}</small>${escape(advisory.title)}</a>${advisory.reviewedVersions ? `<p class="advisory-versions"><strong>Reviewed versions:</strong> ${advisory.reviewedVersions.map(escape).join(' · ')}</p>` : ''}</td><td><span class="severity ${advisory.severity}">${escape(severityLabel(advisory))}</span></td><td>${statusBadge(advisory)}</td><td><time datetime="${advisory.updated}">${date(advisory.updated)}</time></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Security advisories"><table><thead><tr><th>Advisory</th><th>Severity</th><th>Status</th><th>Updated (UTC)</th></tr></thead><tbody>${advisories.map((advisory) => `<tr><td><a href="${escape(url(config, advisoryPath(advisory)))}"><small>${escape(advisory.id)}</small>${escape(advisory.title)}</a>${versionSummary(advisory)}</td><td>${severityBadge(advisory)}</td><td>${statusBadge(advisory)}</td><td><time datetime="${advisory.updated}">${date(advisory.updated)}</time></td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function home(config, advisories, review) {
@@ -156,7 +164,7 @@ function detail(config, advisory) {
 <article class="content advisory-detail">
 <a class="text-link" href="${escape(url(config, 'advisories/'))}">← All advisories</a>
 <p class="eyebrow">${escape(advisory.id)}</p><h1>${escape(advisory.title)}</h1>
-<div class="advisory-meta"><span class="severity ${advisory.severity}">${escape(severityLabel(advisory))}</span>${statusBadge(advisory, true)}<span>Published: <time datetime="${advisory.published}">${date(advisory.published)}</time> UTC</span><span>Updated: <time datetime="${advisory.updated}">${date(advisory.updated)}</time> UTC</span>${advisory.cvss !== undefined ? `<span>${advisory.severitySource === 'upstream' ? 'Upstream CVSS' : 'CVSS'} score: ${advisory.cvss}</span>` : ''}</div>
+<div class="advisory-meta">${severityBadge(advisory)}${statusBadge(advisory, true)}<span>Published: <time datetime="${advisory.published}">${date(advisory.published)}</time> UTC</span><span>Updated: <time datetime="${advisory.updated}">${date(advisory.updated)}</time> UTC</span>${advisory.cvss !== undefined ? `<span>${advisory.severitySource === 'upstream' ? 'Upstream CVSS' : 'CVSS'} score: ${advisory.cvss}</span>` : ''}</div>
 <nav class="advisory-contents" aria-label="On this advisory"><a href="#summary">Summary</a><a href="#product-status">Product status</a><a href="#technical-assessment">Technical assessment</a><a href="#recommended-actions">Recommended actions</a><a href="#references">References</a></nav>
 <section id="summary"><h2>Summary</h2><p>${escape(advisory.summary)}</p></section>
 <section id="product-status"><h2>Product status</h2><div class="table-scroll" tabindex="0" role="region" aria-label="Affected versions"><table><thead><tr><th>Product</th><th>Affected or reviewed versions</th><th>Fixed versions</th><th>Recommended action</th></tr></thead><tbody>${affected}</tbody></table></div></section>
