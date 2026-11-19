@@ -81,8 +81,8 @@ const date = (value) => value.slice(0, 10);
 const advisoryPath = (advisory) => `advisories/${advisory.id}/`;
 const url = (config, relative = '') => new URL(relative, config.baseUrl).href;
 const list = (items) => `<ul>${items.map((item) => `<li>${escape(item)}</li>`).join('')}</ul>`;
-const severityLabel = (advisory) => `${advisory.severity === 'not-rated' ? 'Not rated' : advisory.severity}${advisory.severitySource === 'upstream' ? ' (upstream)' : ''}`;
-const severityBadge = (advisory) => `<span class="severity ${advisory.severity}${advisory.status === 'resolved' ? ' resolved' : ''}">${escape(severityLabel(advisory))}</span>`;
+const severityLabel = (advisory, includeSource = true) => `${advisory.severity === 'not-rated' ? 'Not rated' : advisory.severity}${includeSource && advisory.severitySource === 'upstream' ? ' (upstream)' : ''}`;
+const severityBadge = (advisory) => `<span class="severity ${advisory.severity}${['resolved', 'withdrawn'].includes(advisory.status) ? ` ${advisory.status}` : ''}">${escape(severityLabel(advisory, false))}</span>`;
 const statusBadge = (advisory, detailed = false) => {
   const tone = advisory.status === 'open'
     ? (['critical', 'high'].includes(advisory.severity) ? 'danger' : ['medium', 'low'].includes(advisory.severity) ? 'warning' : 'neutral')

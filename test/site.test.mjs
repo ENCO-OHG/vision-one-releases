@@ -309,7 +309,7 @@ test('status badges preserve readable labels and share tones across tables and d
     assert.ok(archive.includes(`<span class="status-badge ${tone}">${status}</span>`));
     const detail = await readFile(path.join(output, `advisories/${advisories[index].id}/index.html`), 'utf8');
     assert.ok(detail.includes(`<span class="status-badge ${tone}">Status: ${status}</span>`));
-    const severityClass = `severity ${severity}${status === 'resolved' ? ' resolved' : ''}`;
+    const severityClass = `severity ${severity}${['resolved', 'withdrawn'].includes(status) ? ` ${status}` : ''}`;
     const label = severity === 'not-rated' ? 'Not rated' : severity;
     for (const page of [archive, detail]) assert.ok(page.includes(`<span class="${severityClass}">${label}</span>`));
   }
@@ -320,6 +320,8 @@ test('status badges preserve readable labels and share tones across tables and d
   const css = await readFile(path.join(output, stylesheet), 'utf8');
   assert.match(css, /\.severity\.resolved\s*\{\s*background:\s*#d9f3e4;\s*color:\s*#14532d;/);
   assert.ok(css.indexOf('.severity.resolved') > css.indexOf('.severity.high'));
+  assert.match(css, /\.severity\.withdrawn\s*\{\s*background:\s*#edf1f4;\s*color:\s*#374956;/);
+  assert.ok(css.indexOf('.severity.withdrawn') > css.indexOf('.severity.high'));
 });
 
 test('assessed entries generate escaped detail pages and consistent archive/feed ordering', async (t) => {
@@ -340,14 +342,17 @@ test('assessed entries generate escaped detail pages and consistent archive/feed
   }
 });
 
-test('upstream severity stays explicitly qualified on every publication surface', async (t) => {
+test('severity badges omit upstream suffix while CVSS context and feed retain the rating source', async (t) => {
   const advisory = { ...example(), severitySource: 'upstream', cvss: 8.7, assessment: ['Scope <unsafe> & limitations'] };
   const output = await fixtureSite(t, [advisory]);
   const detail = await readFile(path.join(output, `advisories/${advisory.id}/index.html`), 'utf8');
   const home = await readFile(path.join(output, 'index.html'), 'utf8');
   const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
-  for (const page of [detail, home, archive]) assert.match(page, /high \(upstream\)/);
+  for (const page of [detail, home, archive]) {
+    assert.match(page, /<span class="severity high resolved">high<\/span>/);
+    assert.doesNotMatch(page, /high \(upstream\)/);
+  }
   assert.match(detail, /Upstream CVSS score: 8.7/);
   assert.match(detail, /Product applicability assessment/);
   assert.match(detail, /Scope &lt;unsafe&gt; &amp; limitations/);
@@ -484,8 +489,13 @@ test('the withdrawn picomatch notice retains history without claiming a package 
   assert.match(notice.summary, /RC 6 does not fix them/);
   assert.match(notice.summary, /15:38:56Z/);
   assert.equal(notice.published, '2026-11-17T20:23:04Z');
+  assert.equal(notice.versionSummary, 'Upstream advisory withdrawn · No product fix required by this notice.');
+  const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
+  assert.ok(archive.includes(escape(notice.versionSummary)));
+  assert.match(archive, /<span class="severity high withdrawn">high<\/span>/);
+  assert.doesNotMatch(archive, /27\.3\.0-rc\.4 · 27\.3\.0-rc\.5 · 27\.3\.0-rc\.6 · 27\.3\.0-rc\.7/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-006/index.html'), 'utf8');
-  for (const text of ['high (upstream)', '4.0.7', 'No upstream patch', '44165315268', 'not a Vision One-specific', 'Production', 'CVE-2026-112366', 'Status: withdrawn', 'not a current confirmed vulnerable range']) {
+  for (const text of ['Upstream CVSS', '4.0.7', 'No upstream patch', '44165315268', 'not a Vision One-specific', 'Production', 'CVE-2026-112366', 'Status: withdrawn', 'not a current confirmed vulnerable range']) {
     assert.ok(detail.toLowerCase().includes(text.toLowerCase()), `Missing assessed toolchain boundary: ${text}`);
   }
   const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');

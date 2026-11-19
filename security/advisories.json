@@ -115,6 +115,7 @@
   },
   {
     "id": "VO-SA-2026-006",
+    "versionSummary": "Upstream advisory withdrawn · No product fix required by this notice.",
     "title": "picomatch repeated-extglob ReDoS: build-tool applicability",
     "published": "2026-11-17T20:23:04Z",
     "updated": "2026-11-18T16:33:36Z",

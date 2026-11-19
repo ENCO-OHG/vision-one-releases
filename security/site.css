@@ -86,6 +86,7 @@ td time { white-space: nowrap; }
 .severity.medium { background: #fff0c3; color: #6e5000; }
 .severity.low { background: #e3f3ee; color: #17533e; }
 .severity.resolved { background: #d9f3e4; color: #14532d; }
+.severity.withdrawn { background: #edf1f4; color: #374956; }
 .archive { padding-top: 2.6rem; padding-bottom: 3rem; min-height: 55vh; }
 .advisory-detail { padding-top: 2rem; padding-bottom: 2.6rem; }
 .advisory-detail > .eyebrow { margin-top: 1.4rem; }
