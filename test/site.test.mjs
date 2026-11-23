@@ -243,10 +243,10 @@ test('security status separates the dated npm snapshot, open notices and build-t
   assert.match(page, /not a live vulnerability monitor/);
   assert.match(page, /not a comprehensive code audit/);
   assert.match(page, /native libraries/);
-  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 11);
-  assert.equal(review.checks.find((check) => check.component === 'Client').entries, 16);
+  assert.equal(review.checks.find((check) => check.component === 'Electron binary and build tooling').entries, 6);
+  assert.equal(review.checks.find((check) => check.component === 'Client').entries, 0);
   assert.equal(review.checks.find((check) => check.component === 'Server').entries, 0);
-  assert.match(page, /package chains, not 16 product CVEs/);
+  assert.match(page, /not 16 product CVEs/);
   assert.match(page, /not that every older installation is updated/);
   assert.match(page, /VO-SA-2026-003/);
   assert.match(page, /VO-SA-2026-004/);
@@ -421,7 +421,7 @@ test('November runtime notice distinguishes published RC qualification from prod
   assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7']);
   assert.match(notice.affected[0].fixedVersions[0], /27\.3\.0-rc\.3/);
   assert.match(notice.remediation, /stable-only operators should coordinate supported remediation/);
-  assert.match(review.productVersion, /27\.3\.0-rc\.7/);
+  assert.match(review.productVersion, /27\.3\.0-rc\.9/);
   assert.match(notice.affected[0].fixedVersions.at(-1), /27\.3\.0-rc\.7/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-005/index.html'), 'utf8');
   for (const text of ['43910712013', '45.3.3', '24.22.3', '8.23.0', '60-pending-reply', 'not a combined product CVSS', 'not a stable-channel patch', 'No destructive native-trigger', '26.13.1']) {
@@ -485,8 +485,8 @@ test('the withdrawn picomatch notice retains history without claiming a package 
   assert.equal(notice.cvss, 7.5);
   assert.deepEqual(notice.cves, ['CVE-2026-112366']);
   assert.deepEqual(notice.affected[0].fixedVersions, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7']);
-  assert.match(notice.summary, /RC 6 does not fix them/);
+  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7', '27.3.0-rc.9']);
+  assert.match(notice.summary, /not resolved by a package or Vision One patch/);
   assert.match(notice.summary, /15:38:56Z/);
   assert.equal(notice.published, '2026-11-17T20:23:04Z');
   assert.equal(notice.versionSummary, 'Upstream advisory withdrawn · No product fix required by this notice.');
@@ -499,10 +499,10 @@ test('the withdrawn picomatch notice retains history without claiming a package 
     assert.ok(detail.toLowerCase().includes(text.toLowerCase()), `Missing assessed toolchain boundary: ${text}`);
   }
   const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
-  assert.match(page, /3 open or mitigated notices in this archive/);
+  assert.match(page, /1 open or mitigated notice in this archive/);
   assert.match(page, /Withdrawal is not a package patch or a product fix/);
-  assert.match(page, /local preflight explicitly skipped/);
-  assert.match(review.productVersion, /full Windows gate passed/);
+  assert.match(page, /local full preflight skipped/);
+  assert.match(review.productVersion, /complete Windows gate passed/);
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-006/);
   assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
@@ -531,7 +531,7 @@ test('resolved notice summaries retain fix-channel boundaries and do not manufac
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories } = await buildSite({ output });
   const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
-  const resolved = advisories.filter(entry => entry.status === 'resolved');
+  const resolved = advisories.filter(entry => entry.status === 'resolved' && Number(entry.id.split('-').at(-1)) <= 5);
   assert.equal(resolved.length, 5);
   for (const notice of resolved) {
     assert.ok(notice.versionSummary);
@@ -548,7 +548,7 @@ test('resolved notice summaries retain fix-channel boundaries and do not manufac
   assert.match(byId('VO-SA-2026-005').versionSummary, /Prerelease.*rc\.3; external Node\.js/);
 });
 
-test('RC-7 publication extends all six reviewed scopes while preserving withdrawal and stable boundaries', async (t) => {
+test('RC-7 historical publication evidence survives RC-9 review without rewriting older resolved notices', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-rc7-review-'));
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories, review } = await buildSite({ output });
@@ -556,17 +556,17 @@ test('RC-7 publication extends all six reviewed scopes while preserving withdraw
   assert.equal(originalNotices.length, 6);
   for (const advisory of originalNotices) {
     assert.ok(advisory.reviewedVersions.includes('27.3.0-rc.7'));
-    assert.equal(advisory.updated, review.reviewedAt);
+    assert.equal(advisory.updated, advisory.id === 'VO-SA-2026-006' ? review.reviewedAt : '2026-11-18T16:33:36Z');
     assert.ok(advisory.assessment.some((paragraph) => paragraph.includes('44344735750')));
   }
-  assert.match(review.productVersion, /^27\.3\.0-rc\.7 \(published signed release candidate/);
+  assert.match(review.productVersion, /^27\.3\.0-rc\.9 \(published signed release candidate/);
   assert.match(review.checks.find((check) => check.component === 'PKI').assessment, /stable 27\.2\.5 retains 1\.4\.2 and remains unfixed/);
   const withdrawn = advisories.find((advisory) => advisory.status === 'withdrawn');
   assert.equal(withdrawn.id, 'VO-SA-2026-006');
   assert.deepEqual(withdrawn.affected[0].fixedVersions, []);
 });
 
-test('application findings remain open and distinguish reproduction from source-only evidence', async (t) => {
+test('RC-9 resolves the two qualified authentication findings while retaining open OPC UA trust and historical evidence', async (t) => {
   const output = await mkdtemp(path.join(os.tmpdir(), 'vision-one-application-notices-'));
   t.after(() => rm(output, { recursive: true, force: true }));
   const { advisories, review } = await buildSite({ output });
@@ -575,7 +575,8 @@ test('application findings remain open and distinguish reproduction from source-
   for (const id of ['VO-SA-2026-007', 'VO-SA-2026-008', 'VO-SA-2026-009']) {
     const notice = advisories.find((entry) => entry.id === id);
     assert.ok(notice);
-    assert.equal(notice.status, 'open');
+    const corrected = id !== 'VO-SA-2026-008';
+    assert.equal(notice.status, corrected ? 'resolved' : 'open');
     const rating = {
       'VO-SA-2026-007': ['high', 8.1, 'CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N'],
       'VO-SA-2026-008': ['high', 7.4, 'CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N'],
@@ -591,15 +592,16 @@ test('application findings remain open and distinguish reproduction from source-
       * ({ N: 0.85, L: 0.62, H: 0.27 }[metrics.PR]) * 0.85;
     assert.equal(Math.ceil(Math.round((impact + exploitability) * 100000) / 10000) / 10, notice.cvss);
     assert.deepEqual(notice.cves, []);
-    assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.7']);
-    assert.ok(notice.affected.every((entry) => entry.fixedVersions.length === 0));
+    assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.7', '27.3.0-rc.9']);
+    assert.ok(notice.affected.every((entry) => corrected
+      ? entry.fixedVersions.length === 1 && entry.fixedVersions[0].startsWith('27.3.0-rc.9')
+      : entry.fixedVersions.length === 0));
     assert.equal(notice.published, '2026-11-18T20:21:11Z');
-    assert.equal(notice.updated, '2026-11-18T20:26:09Z');
+    assert.equal(notice.updated, review.reviewedAt);
     assert.ok(feed.includes(id));
-    assert.ok(page.includes(id));
     const detail = await readFile(path.join(output, `advisories/${id}/index.html`), 'utf8');
-    assert.match(detail, /Status: open/);
-    assert.match(detail, /No fixed version listed/);
+    assert.match(detail, corrected ? /Status: resolved/ : /Status: open/);
+    assert.match(detail, corrected ? /27\.3\.0-rc\.9 \(published signed prerelease/ : /No fixed version listed/);
     assert.ok(detail.includes(rating[2]));
     assert.ok(detail.includes(`CVSS score: ${notice.cvss}`));
   }
@@ -609,6 +611,10 @@ test('application findings remain open and distinguish reproduction from source-
   assert.match(byId('VO-SA-2026-008').assessment.join(' '), /not a demonstrated network interception attack/);
   assert.match(byId('VO-SA-2026-009').assessment.join(' '), /not a newly executed end-to-end password-reset exploit test/);
   assert.match(byId('VO-SA-2026-009').impact, /does not preserve roles that have been removed/);
-  assert.match(review.checks.find((check) => check.component === 'Server').assessment, /no new npm audit/);
-  assert.equal(review.reviewedAt, '2026-11-18T16:33:36Z', 'preserve the original dependency-review timestamp');
+  assert.match(review.checks.find((check) => check.component === 'Server').assessment, /Fresh 2026-11-23 full npm audit/);
+  assert.match(byId('VO-SA-2026-007').assessment[0], /45209207131/);
+  assert.match(byId('VO-SA-2026-009').remediation, /not be described as comprehensive server-side per-session revocation/);
+  assert.match(page, /1 open or mitigated notice/);
+  assert.match(page, /VO-SA-2026-008/);
+  assert.equal(review.reviewedAt, '2026-11-23T16:12:00Z');
 });

@@ -3,32 +3,34 @@
     "id": "VO-SA-2026-009",
     "title": "Password changes do not fully revoke existing sessions",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-18T20:26:09Z",
+    "updated": "2026-11-23T16:12:00Z",
     "severity": "medium",
     "severitySource": "product",
     "cvss": 6.5,
-    "status": "open",
-    "reviewedVersions": ["27.3.0-rc.7"],
-    "summary": "The reviewed session-refresh path can renew a still-valid session token after a password change or reset without requiring the new password or MFA again. Password reset must not be treated as complete containment of a compromised session. No fixed product version is available for this finding.",
+    "status": "resolved",
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9"],
+    "versionSummary": "Reviewed affected: 27.3.0-rc.7 · Prerelease correction: 27.3.0-rc.9.",
+    "summary": "Published signed 27.3.0-rc.9 corrects password-change/reset session refresh through durable per-account revocation. Reviewed RC 7 can renew an old session after a password reset. The correction preserves only the explicitly authorized initiating password-change session; it is not a claim of comprehensive server-side per-session logout revocation or stable-channel remediation.",
     "affected": [
       {
         "product": "Vision One Server authentication and session refresh",
         "versions": "Confirmed by source review of the 27.3.0-rc.7 tag and matching current authentication paths. Earlier versions and the complete affected range have not been established and must not be assumed unaffected. No customer installation was tested.",
-        "fixedVersions": [],
-        "action": "If a session token may be compromised, do not rely on password reset or local logout alone. Isolate access to the affected runtime through approved network and maintenance procedures and contact EN-CO for coordinated session containment and remediation. Preserve evidence; avoid ad hoc database or signing-key changes."
+        "fixedVersions": ["27.3.0-rc.9 (published signed prerelease; durable password-change/reset revocation)"],
+        "action": "Where prerelease use is approved, evaluate signed RC 9 with backups, controlled restart and reauthentication. For older or stable-only installations, coordinate supported remediation and independent network containment with EN-CO. Local logout is not claimed as server-side per-session revocation. Preserve evidence and avoid ad hoc database or signing-key changes."
       }
     ],
     "impact": "A holder of a still-valid token for an existing account may retain access by refreshing it after password reset. This does not preserve roles that have been removed: refreshed sessions load current roles, and deleted users cannot refresh. The reviewed login-lockout mechanism also does not revoke existing tokens, and local idle/manual logout removes client state without server-side per-session revocation. EN-CO product assessment: CVSS v3.1 Base 6.5 (Medium), vector CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:N. The scored scenario is continued unauthorized administrative access after password reset using an already compromised administrative session token, not escalation from an ordinary account. No customer compromise or assigned CVE is claimed.",
     "assessment": [
+      "Revision 2026-11-23: signed RC 9 was published at 16:06:59Z after complete Windows workflow 45209207131 passed on 333dab674ca4995ffd0a22944dd5cc1fc5d6060e. Downloaded installer SHA-256 1033188fdc861ab7ad9387c7704eb4f0fc9d828da12becf5390f8ddf745002ab matches checksum/GitHub digest; Authenticode is Valid for EN-CO DI STEINDL ROBERT & C. SNC, and notes/attached audit match checked sources. Durable per-account session versions reject old password-change/reset tokens through protected/optional authentication and refresh, including restart and legacy-token regression coverage. Permission/profile revision refresh is separate. Authorized self-password-change renewal preserves only the initiating session through the explicit response. The complete gate passed 53/53 EMS steps, 2859 emulator tests (23 existing skips), 2064 browser tests, 92 Electron tests, five CSP checks and required security/build/manual stages. This correction does not claim universal socket/in-flight-operation coverage, a new server-side per-session logout mechanism, a complete historical affected range or stable/plant acceptance.",
       "Rating revision 2026-11-18 20:26 UTC: EN-CO assigns the product-specific CVSS v3.1 Base score, not an upstream or independent certification. AV:N reflects access through network APIs; AC:L reflects repeatable refresh without a timing race; PR:H accounts for already possessing an administrative session in the scored scenario; UI:N means no victim participation in the refresh itself. S:U limits consequences to the Vision One security authority. C:H/I:H reflect continued access to privileged data and configuration after the intended password-reset containment boundary. A:N does not credit an additional availability impact not established by this review. Less-privileged accounts have role-bounded impact; no privilege escalation, plant-safety consequence or temporal/environmental score is asserted. Password reset defines the assessed containment event, not a second victim action required to send the refresh request. Evidence remains source-only for this finding.",
       "Review 2026-11-18: password changes and resets increment the central authentication revision, so subsequent protected API calls reject the old token. The refresh guard intentionally accepts an older revision if signature and expiry remain valid; the refresh API then loads the existing user and issues a new full session. This restores access without verifying the changed password or completing MFA again. This is a source-confirmed revocation gap, not a newly executed end-to-end password-reset exploit test.",
       "The relevant authentication API, JWT middleware, user-runtime and client logout paths match the published 27.3.0-rc.7 source tag. The login API explicitly issues seven-day session tokens; the generic token lifetime setting is not the effective limit for these tokens. Refresh issues another token without a demonstrated original-session absolute lifetime bound in the reviewed path.",
       "Role removal and user deletion remain distinct and effective boundaries in the reviewed API flow: a refreshed token receives current roles and a deleted account cannot refresh. Already executing operations, all socket paths, administrative account-disable behavior and earlier releases are not comprehensively qualified by this assessment. The separate pre-MFA token-purpose defect is VO-SA-2026-007."
     ],
-    "remediation": "No released fix is claimed. A correction must distinguish current-role refresh from security-driven session revocation, enforce the intended password-reset and logout containment policy, and qualify the behavior with targeted regression tests before publication of a fixed release.",
+    "remediation": "Signed prerelease 27.3.0-rc.9 provides the tested password-change/reset revocation correction. Evaluate it only under an approved prerelease maintenance process with backups and reauthentication; stable-only installations require a supported remediation plan. Preserve independent access containment and least privilege. Existing local logout must not be described as comprehensive server-side per-session revocation.",
     "workarounds": [
       "Restrict runtime reachability to approved OT segments and authenticated VPN/access gateways. Remove suspected access at those independently enforced boundaries while supported session containment is coordinated. These measures reduce exposure; they do not repair session revocation.",
-      "Preserve relevant authentication and access logs. Password reset remains useful for protecting future password logins, but is not a validated way to terminate every already issued session in the reviewed version."
+       "Preserve relevant authentication and access logs. In reviewed RC 7, password reset does not reliably terminate existing sessions. RC 9 adds tested account-level password-change/reset revocation; local logout and already executing operations remain distinct."
     ],
     "references": [
       { "title": "FIRST CVSS v3.1 specification and scoring definitions", "url": "https://www.first.org/cvss/v3.1/specification-document" },
@@ -41,12 +43,12 @@
     "id": "VO-SA-2026-008",
     "title": "OPC UA client automatically trusts unknown server certificates",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-18T20:26:09Z",
+    "updated": "2026-11-23T16:12:00Z",
     "severity": "high",
     "severitySource": "product",
     "cvss": 7.4,
     "status": "open",
-    "reviewedVersions": ["27.3.0-rc.7"],
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9"],
     "summary": "The reviewed encrypted OPC UA client path relies on a library certificate-manager default that automatically trusts previously untrusted server certificates. Encryption therefore does not establish that the peer was explicitly approved during commissioning. No fixed product version is available for this finding.",
     "affected": [
       {
@@ -58,6 +60,7 @@
     ],
     "impact": "An attacker able to redirect or intercept the OPC UA connection and present a certificate accepted by this automatic-trust path may impersonate the intended server. This can expose operational traffic, commands or authentication exchanges to an unintended peer, depending on the protocol and server configuration. EN-CO product assessment: CVSS v3.1 Base 7.4 (High), vector CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N. This is not an assertion that arbitrary malformed, expired or otherwise invalid certificates all pass, nor evidence of credential capture or a customer attack. No CVE is assigned.",
     "assessment": [
+      "Revision 2026-11-23: published signed RC 9 passed complete Windows workflow 45209207131, but retains the automatic unknown-server-certificate-trust limitation. Generic OPC UA browsing/runtime does not add a strict commissioned trust boundary. This notice remains open with no fixed version. Application tests and signing do not establish peer approval, a live interception test or customer-plant acceptance; retain independently enforced OT endpoint/routing controls and commissioning.",
       "Rating revision 2026-11-18 20:26 UTC: EN-CO assigns a product-specific CVSS v3.1 Base score for server impersonation in the reviewed automatic-trust path. AV:N is used because an on-path or redirected endpoint is not inherently restricted to one adjacent LAN; a normal OT/VPN deployment does not turn the protocol defect into AV:A. AC:H captures the prerequisite ability to intercept or redirect the client connection. PR:N means no Vision One account or prior client permissions are required by this path, not that obtaining the network position is effortless; UI:N reflects normal automatic connection without a separate victim approval step. S:U scores Vision One's OPC UA communication boundary only. C:H/I:H reflect exposure of sensitive authentication exchanges and substitution of operational values with serious consequences to the client's data trust. A:N avoids counting denial of traffic already possible from the on-path position without this defect. PLC safety interlocks, cross-system compromise and physical harm are not scored. This remains source/default evidence without a live interception test; no temporal/environmental score is assigned.",
       "Source review 2026-11-18: when device encryption is enabled, Vision One selects SignAndEncrypt with Basic256Sha256. It creates the OPC UA client without an explicit restrictive certificate manager. The inspected node-opcua-client default uses a certificate manager with automaticallyAcceptUnknownCertificate enabled.",
       "The inspected manager changes BadCertificateUntrusted to trusted and returns success. It also accepts an unknown revocation status in this auto-accept path. Other certificate verification failures are not thereby declared accepted. This is a concrete library-default and application-configuration finding, not a demonstrated network interception attack or a general upstream vulnerability claim.",
@@ -79,32 +82,34 @@
     "id": "VO-SA-2026-007",
     "title": "Login MFA and mandatory enrollment can be bypassed through session refresh",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-18T20:26:09Z",
+    "updated": "2026-11-23T16:12:00Z",
     "severity": "high",
     "severitySource": "product",
     "cvss": 8.1,
-    "status": "open",
-    "reviewedVersions": ["27.3.0-rc.7"],
-    "summary": "An isolated test confirms that login MFA and required TOTP enrollment can be bypassed through insufficient token-purpose separation in session refresh. A pre-authentication intermediate token can become a full session without completing TOTP. No fixed product version is available for this finding.",
+    "status": "resolved",
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9"],
+    "versionSummary": "Reviewed affected: 27.3.0-rc.7 · Prerelease correction: 27.3.0-rc.9.",
+    "summary": "Published signed 27.3.0-rc.9 corrects the reviewed login-MFA/enrollment session-refresh bypass by enforcing token purpose and account session version. RC 7 permits an intermediate token to become a full session without completing TOTP. A qualified prerelease correction is available; this is not a stable-channel release or a claim that every authentication risk is eliminated.",
     "affected": [
       {
         "product": "Vision One Server login MFA, TOTP enrollment and session refresh",
         "versions": "The relevant authentication API and JWT middleware in the published 27.3.0-rc.7 source tag match the tested current paths. Reproduction used real API/guard classes with simulated users, not a customer installation or downloaded installer. Earlier releases and the complete affected range have not been established and must not be assumed unaffected.",
-        "fixedVersions": [],
-        "action": "Do not rely on application login MFA alone as the access boundary in the reviewed version. Restrict runtime reachability through independently enforced OT segmentation and VPN/access-gateway authentication, protect primary credentials and contact EN-CO for a supported remediation plan. Do not disable MFA or replace packaged authentication files."
+        "fixedVersions": ["27.3.0-rc.9 (published signed prerelease; token-purpose and session-version enforcement)"],
+        "action": "Where prerelease use is approved, evaluate signed RC 9 with backups, controlled restart and reauthentication. Older and stable-only installations require a supported remediation plan. Retain independently enforced OT segmentation/VPN authentication and primary-credential protection; do not disable MFA or replace packaged authentication files."
       }
     ],
     "impact": "A party holding a valid login-MFA or required-enrollment intermediate token can obtain the account's full session without completing the second factor. Obtaining that intermediate token through normal login first requires successful primary authentication; this is not a demonstrated anonymous password bypass. Resulting access is bounded by the account's current roles, potentially including administration. EN-CO product assessment: CVSS v3.1 Base 8.1 (High), vector CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N. Separate action-specific TOTP checks are not established as bypassed by this test. No active exploitation, customer compromise or assigned CVE is claimed.",
     "assessment": [
+      "Revision 2026-11-23: signed RC 9 was published at 16:06:59Z after complete Windows workflow 45209207131 passed on 333dab674ca4995ffd0a22944dd5cc1fc5d6060e. Downloaded checksum/GitHub digest, Valid expected-publisher Authenticode and matching notes/audit are verified. Session guards and refresh reject login-MFA/enrollment/action tokens and malformed claims; authentication steps bind to current account session versions. Real API/guard regressions now reject both original MFA/enrollment substitutions, with valid-session, invalid/expired-token, deleted-user and revocation-race controls passing. The full gate includes 2859 emulator tests (23 existing skips), 2064 browser tests, 92 Electron tests, five CSP checks, 53/53 EMS steps and security/build/manual stages. No anonymous-password-bypass, action-specific TOTP bypass, complete historical affected range or plant-safety claim is added. Original reproduction evidence below remains historical evidence, not a description of corrected RC 9.",
       "Rating revision 2026-11-18 20:26 UTC: EN-CO assigns a product-specific CVSS v3.1 Base score for bypass of the remaining authentication factor on a privileged account. AV:N reflects network API access even in an OT/VPN deployment; AC:L reflects the reproduced deterministic token substitution without a race; PR:L represents limited first-factor-authenticated access to an intermediate token, not existing administrative control before the bypass. UI:N requires no victim action after those prerequisites. S:U confines the assessment to Vision One. C:H/I:H reflect access to privileged account data and configuration after full-session issuance; the isolated test demonstrated protected administrative access but did not destructively exercise every downstream operation. A:N is conservative: no additional service-availability impact was established. The score is a reasonable privileged-account impact assessment, not proof of OS compromise, bypassed action-specific TOTP, plant-safety impact or anonymous access. No temporal/environmental score is assigned.",
       "Reproduced 2026-11-18 using an isolated loopback HTTP harness with the real authentication API, JWT middleware and role guards and a simulated user backend. No customer accounts, production data, external services or valid user secrets were used. The intermediate tokens were issued by the real login API after the simulated backend returned MFA-required or enrollment-required status.",
       "Both intermediate tokens were rejected directly by the protected test administration endpoint, but session refresh returned a full session accepted by that same endpoint. No TOTP verification or enrollment-confirmation call occurred. Three control checks passed: normal full-session refresh, rejection of invalid/expired tokens and rejection of refresh for a nonexistent user. Both security regressions requiring intermediate-token rejection failed. Test compilation passed; the security test exited with code 1. A previously successful release gate does not override this new failing evidence.",
       "The refresh guard validates signature and expiry but does not establish that a token represents completed authentication before issuing a new full session. Token-purpose separation and all consumers of intermediate/action tokens require review. No product fix was implemented or published in this assessment; the local reproduction does not establish the complete historical affected range."
     ],
-    "remediation": "No released fix is claimed. Correct refresh authentication to accept only appropriately authenticated session tokens and reject pre-MFA/enrollment tokens. Retain targeted negative regressions and normal-session controls, assess other token purposes and publish a qualified corrected release before naming any version as fixed.",
+    "remediation": "Signed prerelease 27.3.0-rc.9 provides the tested token-purpose/session-version correction. Deploy only through approved prerelease maintenance with backups, controlled restart and reauthentication. Stable-only installations require supported remediation. Keep MFA enabled and retain independent access-gateway/OT restrictions; do not replace individual packaged authentication files.",
     "workarounds": [
       "Use independently enforced authenticated VPN/access-gateway controls and restrict who can reach the runtime. These controls reduce exposure but do not repair the application MFA defect or protect against an already authorized network peer with compromised primary credentials.",
-      "Keep individual least-privilege accounts, protect primary credentials and review suspicious authentication/access activity. Do not assume password reset alone revokes an existing session; the separate session-revocation finding is VO-SA-2026-009."
+      "Keep individual least-privilege accounts, protect primary credentials and review suspicious authentication/access activity. Older RC 7 password revocation is separately assessed in VO-SA-2026-009; RC 9 adds that notice's tested account-level correction without claiming comprehensive per-session logout revocation."
     ],
     "references": [
       { "title": "FIRST CVSS v3.1 specification and scoring definitions", "url": "https://www.first.org/cvss/v3.1/specification-document" },
@@ -118,13 +123,13 @@
     "versionSummary": "Upstream advisory withdrawn · No product fix required by this notice.",
     "title": "picomatch repeated-extglob ReDoS: build-tool applicability",
     "published": "2026-11-17T20:23:04Z",
-    "updated": "2026-11-18T16:33:36Z",
+    "updated": "2026-11-23T16:12:00Z",
     "severity": "high",
     "severitySource": "upstream",
     "cvss": 7.5,
     "status": "withdrawn",
-    "reviewedVersions": ["27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6", "27.3.0-rc.7"],
-    "summary": "GitHub withdrew picomatch GHSA-fc5q-39xc-vjpf on 2026-11-18 at 15:38:56Z. The linked maintainer disputes the vulnerability classification of attacker-supplied regex-like glob patterns. This notice is retained as withdrawn, not resolved by a Vision One or package patch. Fresh npm audits still report the prior build-chain entries; published RC 6 does not fix them. Keep build/test/packaging pattern sources and inputs trusted.",
+    "reviewedVersions": ["27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6", "27.3.0-rc.7", "27.3.0-rc.9"],
+    "summary": "GitHub withdrew picomatch GHSA-fc5q-39xc-vjpf on 2026-11-18 at 15:38:56Z. This notice remains withdrawn, not resolved by a package or Vision One patch. Fresh 2026-11-23 audits no longer report the earlier high picomatch chains; App retains six moderate build-tool entries. Keep build/test/packaging pattern sources and inputs trusted.",
     "affected": [
       {
         "product": "Vision One Client and Electron build, test and packaging environments",
@@ -135,6 +140,7 @@
     ],
     "impact": "CVE-2026-112366 / GHSA-fc5q-39xc-vjpf describes regular-expression denial of service through single-branch repeated extglobs. The upstream High CVSS 3.1 score is 7.5 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H). This is the upstream score, not a Vision One-specific exposure rating. Product reachability and impact depend on an attacker supplying patterns to an affected matcher; no customer attack or installed-runtime exploit was demonstrated.",
     "assessment": [
+      "Revision 2026-11-23: fresh full npm audits for signed RC 9 report zero Server/Client/Shared/PKI/Manual entries and six moderate App entries, with no high/critical findings. Earlier picomatch high chain counts remain dated historical evidence; the withdrawn notice is not reclassified as fixed by RC 9. Registry metadata evolution and upstream withdrawal are distinct from package/product remediation. RC 9 passed the complete signed Windows gate and verified publication, not a universal native/build-input safety assessment.",
       "Revision 2026-11-18 16:33 UTC: signed 27.3.0-rc.7 was published at 16:33:04Z after authoritative Windows workflow 44344735750 passed from 3a9f5c8e61a5cb20c74b6acce2ad83d2e765d822. Downloaded installer SHA-256 42c634d604c64711105831487163210cc8047244b292b7f13242f34667ab243c matches SHA256SUMS.txt and the GitHub digest; Windows Authenticode is Valid for EN-CO DI STEINDL ROBERT & C. SNC, and notes/attached audit match checked sources. The full gate passed 51/51 EMS steps, 2588 emulator tests (ten existing skips), 1974 Chromium/Firefox/WebKit tests, 92 Electron tests, five CSP checks and required security/build/manual stages. Dependencies are unchanged. This extends reviewed published scope, not a picomatch fix; upstream withdrawal and remaining npm build-chain reports remain separate.",
       "Revision 2026-11-18 16:14 UTC: GitHub's live advisory API records withdrawn_at 2026-11-18T15:38:56Z and updated_at 15:38:58Z, with no first patched version. Its linked maintainer comment disputes the vulnerability classification and advises against accepting untrusted regex-like glob patterns. The API description contains inconsistent wording; this assessment records the explicit withdrawal and linked explanation rather than inventing remediation or a safe-pattern guarantee. The original ID/publication, historical upstream High score and prior release/audit evidence are retained. Status withdrawn is distinct from resolved by an updated product.",
       "Fresh full npm audits on 2026-11-18 after the withdrawal still report Client 16 high and App six high/five moderate package/dependent-chain entries, with Server/Shared/PKI/worker/Manual and reviewed production-only scopes zero. These are actual registry results, not silently replaced by zero after withdrawal. The unchanged package baseline was not patched by this classification change. npm metadata, native runtime assessment and trusted-build-input controls remain separate.",
@@ -144,7 +150,7 @@
       "npm dependency-tree review identifies Angular Devkit/build, Parcel watcher, Vite, Vitest, tinyglobby/fdir and electron-builder's rebuild/node-gyp chain as consumers. This is a bounded build-tool assessment, not proof about all dynamic integrations. Electron itself is dev-declared but shipped and remains separately reviewed in VO-SA-2026-005; production-only npm counts alone do not qualify every native executable.",
       "Signed RC 5 was published at 2026-11-17T20:20:56Z after complete Windows workflow 44165315268 passed from 9229910c1a8cf192ca46095639d0dc8fd88ef62a, including the full canonical release gate, signing and final artifact verification. The downloaded installer SHA-256 8edfecf42bdf3c959e13d9fcf9f5199a81c94e20d2abed42dbd3bbfe4f229821 matches SHA256SUMS.txt and the GitHub digest; release notes and attached audit match checked sources. CI reports valid Authenticode on all required Windows artifacts. Passing the gate or signing the installer does not fix this open dependency finding."
     ],
-    "remediation": "No upstream patch or Vision One fix is claimed: the upstream advisory was withdrawn, not repaired by a version update. Preserve the historical finding and current npm audit discrepancy, monitor supported toolchain updates and restrict build/test/packaging inputs, pattern sources and service access. An unsupported downgrade or a clean production-only audit is not a native/runtime safety assessment. Existing deployment and maintenance controls remain applicable.",
+    "remediation": "No upstream patch or Vision One fix is claimed: the upstream advisory was withdrawn, not repaired by this product release. Preserve dated historical audit evidence; 2026-11-23 registry audits no longer report the former high chains. Monitor supported toolchain updates and restrict build/test/packaging inputs, pattern sources and service access. Clean npm counts are not a native/runtime safety assessment.",
     "workarounds": [
       "Do not accept untrusted glob patterns, source trees or build configuration in the affected build/test/packaging services. Restrict their network and account access.",
       "Keep CI/build and maintenance environments separate from plant runtime. These restrictions reduce exposure but are not a validated universal workaround for every matcher consumer."
