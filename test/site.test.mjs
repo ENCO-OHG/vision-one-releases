@@ -421,7 +421,7 @@ test('November runtime notice distinguishes published RC qualification from prod
   assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7']);
   assert.match(notice.affected[0].fixedVersions[0], /27\.3\.0-rc\.3/);
   assert.match(notice.remediation, /stable-only operators should coordinate supported remediation/);
-  assert.match(review.productVersion, /27\.3\.0-rc\.9/);
+  assert.match(review.productVersion, /27\.3\.0-rc\.11/);
   assert.match(notice.affected[0].fixedVersions.at(-1), /27\.3\.0-rc\.7/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-005/index.html'), 'utf8');
   for (const text of ['43910712013', '45.3.3', '24.22.3', '8.23.0', '60-pending-reply', 'not a combined product CVSS', 'not a stable-channel patch', 'No destructive native-trigger', '26.13.1']) {
@@ -556,10 +556,10 @@ test('RC-7 historical publication evidence survives RC-9 review without rewritin
   assert.equal(originalNotices.length, 6);
   for (const advisory of originalNotices) {
     assert.ok(advisory.reviewedVersions.includes('27.3.0-rc.7'));
-    assert.equal(advisory.updated, advisory.id === 'VO-SA-2026-006' ? review.reviewedAt : '2026-11-18T16:33:36Z');
+    assert.equal(advisory.updated, advisory.id === 'VO-SA-2026-006' ? '2026-11-23T16:12:00Z' : '2026-11-18T16:33:36Z');
     assert.ok(advisory.assessment.some((paragraph) => paragraph.includes('44344735750')));
   }
-  assert.match(review.productVersion, /^27\.3\.0-rc\.9 \(published signed release candidate/);
+  assert.match(review.productVersion, /^27\.3\.0-rc\.11 \(published signed release candidate/);
   assert.match(review.checks.find((check) => check.component === 'PKI').assessment, /stable 27\.2\.5 retains 1\.4\.2 and remains unfixed/);
   const withdrawn = advisories.find((advisory) => advisory.status === 'withdrawn');
   assert.equal(withdrawn.id, 'VO-SA-2026-006');
@@ -592,12 +592,14 @@ test('RC-9 resolves the two qualified authentication findings while retaining op
       * ({ N: 0.85, L: 0.62, H: 0.27 }[metrics.PR]) * 0.85;
     assert.equal(Math.ceil(Math.round((impact + exploitability) * 100000) / 10000) / 10, notice.cvss);
     assert.deepEqual(notice.cves, []);
-    assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.7', '27.3.0-rc.9']);
+    assert.deepEqual(notice.reviewedVersions, corrected
+      ? ['27.3.0-rc.7', '27.3.0-rc.9']
+      : ['27.3.0-rc.7', '27.3.0-rc.9', '27.3.0-rc.10', '27.3.0-rc.11']);
     assert.ok(notice.affected.every((entry) => corrected
       ? entry.fixedVersions.length === 1 && entry.fixedVersions[0].startsWith('27.3.0-rc.9')
       : entry.fixedVersions.length === 0));
     assert.equal(notice.published, '2026-11-18T20:21:11Z');
-    assert.equal(notice.updated, review.reviewedAt);
+    assert.equal(notice.updated, corrected ? '2026-11-23T16:12:00Z' : review.reviewedAt);
     assert.ok(feed.includes(id));
     const detail = await readFile(path.join(output, `advisories/${id}/index.html`), 'utf8');
     assert.match(detail, corrected ? /Status: resolved/ : /Status: open/);
@@ -616,5 +618,7 @@ test('RC-9 resolves the two qualified authentication findings while retaining op
   assert.match(byId('VO-SA-2026-009').remediation, /not be described as comprehensive server-side per-session revocation/);
   assert.match(page, /1 open or mitigated notice/);
   assert.match(page, /VO-SA-2026-008/);
-  assert.equal(review.reviewedAt, '2026-11-23T16:12:00Z');
+  assert.equal(review.reviewedAt, '2026-11-26T14:43:21Z');
+  assert.match(review.productVersion, /27\.3\.0-rc\.11/);
+  assert.ok(byId('VO-SA-2026-008').reviewedVersions.includes('27.3.0-rc.11'));
 });

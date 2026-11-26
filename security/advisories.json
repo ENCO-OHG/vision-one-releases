@@ -43,12 +43,12 @@
     "id": "VO-SA-2026-008",
     "title": "OPC UA client automatically trusts unknown server certificates",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-23T16:12:00Z",
+    "updated": "2026-11-26T14:43:21Z",
     "severity": "high",
     "severitySource": "product",
     "cvss": 7.4,
     "status": "open",
-    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9"],
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9", "27.3.0-rc.10", "27.3.0-rc.11"],
     "summary": "The reviewed encrypted OPC UA client path relies on a library certificate-manager default that automatically trusts previously untrusted server certificates. Encryption therefore does not establish that the peer was explicitly approved during commissioning. No fixed product version is available for this finding.",
     "affected": [
       {
@@ -60,6 +60,7 @@
     ],
     "impact": "An attacker able to redirect or intercept the OPC UA connection and present a certificate accepted by this automatic-trust path may impersonate the intended server. This can expose operational traffic, commands or authentication exchanges to an unintended peer, depending on the protocol and server configuration. EN-CO product assessment: CVSS v3.1 Base 7.4 (High), vector CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N. This is not an assertion that arbitrary malformed, expired or otherwise invalid certificates all pass, nor evidence of credential capture or a customer attack. No CVE is assigned.",
     "assessment": [
+      "Revision 2026-11-26: published signed RC 10 and RC 11 retain the same trust limitation. RC 10 recovery changes and RC 11 polling/subscription changes do not implement strict peer approval. The complete signed RC 11 Windows gate passed; the notice remains open and the recommended controls are unchanged.",
       "Revision 2026-11-23: published signed RC 9 passed complete Windows workflow 45209207131, but retains the automatic unknown-server-certificate-trust limitation. Generic OPC UA browsing/runtime does not add a strict commissioned trust boundary. This notice remains open with no fixed version. Application tests and signing do not establish peer approval, a live interception test or customer-plant acceptance; retain independently enforced OT endpoint/routing controls and commissioning.",
       "Rating revision 2026-11-18 20:26 UTC: EN-CO assigns a product-specific CVSS v3.1 Base score for server impersonation in the reviewed automatic-trust path. AV:N is used because an on-path or redirected endpoint is not inherently restricted to one adjacent LAN; a normal OT/VPN deployment does not turn the protocol defect into AV:A. AC:H captures the prerequisite ability to intercept or redirect the client connection. PR:N means no Vision One account or prior client permissions are required by this path, not that obtaining the network position is effortless; UI:N reflects normal automatic connection without a separate victim approval step. S:U scores Vision One's OPC UA communication boundary only. C:H/I:H reflect exposure of sensitive authentication exchanges and substitution of operational values with serious consequences to the client's data trust. A:N avoids counting denial of traffic already possible from the on-path position without this defect. PLC safety interlocks, cross-system compromise and physical harm are not scored. This remains source/default evidence without a live interception test; no temporal/environmental score is assigned.",
       "Source review 2026-11-18: when device encryption is enabled, Vision One selects SignAndEncrypt with Basic256Sha256. It creates the OPC UA client without an explicit restrictive certificate manager. The inspected node-opcua-client default uses a certificate manager with automaticallyAcceptUnknownCertificate enabled.",
