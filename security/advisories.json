@@ -3,20 +3,20 @@
     "id": "VO-SA-2026-009",
     "title": "Password changes do not fully revoke existing sessions",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-23T16:12:00Z",
+    "updated": "2026-11-27T13:38:56Z",
     "severity": "medium",
     "severitySource": "product",
     "cvss": 6.5,
     "status": "resolved",
-    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9"],
-    "versionSummary": "Reviewed affected: 27.3.0-rc.7 · Prerelease correction: 27.3.0-rc.9.",
-    "summary": "Published signed 27.3.0-rc.9 corrects password-change/reset session refresh through durable per-account revocation. Reviewed RC 7 can renew an old session after a password reset. The correction preserves only the explicitly authorized initiating password-change session; it is not a claim of comprehensive server-side per-session logout revocation or stable-channel remediation.",
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9", "27.3.0"],
+    "versionSummary": "Reviewed affected: 27.3.0-rc.7 · Corrected in RC 9 and stable 27.3.0.",
+    "summary": "Published signed stable 27.3.0 retains the durable per-account password-change/reset revocation introduced in RC 9. The correction preserves only the explicitly authorized initiating password-change session. It does not provide comprehensive server-side per-session logout revocation.",
     "affected": [
       {
         "product": "Vision One Server authentication and session refresh",
         "versions": "Confirmed by source review of the 27.3.0-rc.7 tag and matching current authentication paths. Earlier versions and the complete affected range have not been established and must not be assumed unaffected. No customer installation was tested.",
-        "fixedVersions": ["27.3.0-rc.9 (published signed prerelease; durable password-change/reset revocation)"],
-        "action": "Where prerelease use is approved, evaluate signed RC 9 with backups, controlled restart and reauthentication. For older or stable-only installations, coordinate supported remediation and independent network containment with EN-CO. Local logout is not claimed as server-side per-session revocation. Preserve evidence and avoid ad hoc database or signing-key changes."
+        "fixedVersions": ["27.3.0-rc.9 (published signed prerelease; durable password-change/reset revocation)", "27.3.0 (published signed stable release)"],
+        "action": "Update to signed stable 27.3.0 with backups, controlled restart and reauthentication. Retain independent network containment. Preserve evidence and avoid ad hoc database or signing-key changes."
       }
     ],
     "impact": "A holder of a still-valid token for an existing account may retain access by refreshing it after password reset. This does not preserve roles that have been removed: refreshed sessions load current roles, and deleted users cannot refresh. The reviewed login-lockout mechanism also does not revoke existing tokens, and local idle/manual logout removes client state without server-side per-session revocation. EN-CO product assessment: CVSS v3.1 Base 6.5 (Medium), vector CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:N. The scored scenario is continued unauthorized administrative access after password reset using an already compromised administrative session token, not escalation from an ordinary account. No customer compromise or assigned CVE is claimed.",
@@ -27,7 +27,7 @@
       "The relevant authentication API, JWT middleware, user-runtime and client logout paths match the published 27.3.0-rc.7 source tag. The login API explicitly issues seven-day session tokens; the generic token lifetime setting is not the effective limit for these tokens. Refresh issues another token without a demonstrated original-session absolute lifetime bound in the reviewed path.",
       "Role removal and user deletion remain distinct and effective boundaries in the reviewed API flow: a refreshed token receives current roles and a deleted account cannot refresh. Already executing operations, all socket paths, administrative account-disable behavior and earlier releases are not comprehensively qualified by this assessment. The separate pre-MFA token-purpose defect is VO-SA-2026-007."
     ],
-    "remediation": "Signed prerelease 27.3.0-rc.9 provides the tested password-change/reset revocation correction. Evaluate it only under an approved prerelease maintenance process with backups and reauthentication; stable-only installations require a supported remediation plan. Preserve independent access containment and least privilege. Existing local logout must not be described as comprehensive server-side per-session revocation.",
+    "remediation": "Install signed stable 27.3.0 under the approved maintenance procedure, with backups, restart and reauthentication. Preserve independent access containment and least privilege. Existing local logout must not be described as comprehensive server-side per-session revocation.",
     "workarounds": [
       "Restrict runtime reachability to approved OT segments and authenticated VPN/access gateways. Remove suspected access at those independently enforced boundaries while supported session containment is coordinated. These measures reduce exposure; they do not repair session revocation.",
        "Preserve relevant authentication and access logs. In reviewed RC 7, password reset does not reliably terminate existing sessions. RC 9 adds tested account-level password-change/reset revocation; local logout and already executing operations remain distinct."
@@ -43,17 +43,18 @@
     "id": "VO-SA-2026-008",
     "title": "OPC UA client automatically trusts unknown server certificates",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-26T14:43:21Z",
+    "updated": "2026-11-27T13:38:56Z",
     "severity": "high",
     "severitySource": "product",
     "cvss": 7.4,
     "status": "open",
-    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9", "27.3.0-rc.10", "27.3.0-rc.11"],
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9", "27.3.0-rc.10", "27.3.0-rc.11", "27.3.0"],
+    "versionSummary": "Open in stable 27.3.0 · No published fix.",
     "summary": "The reviewed encrypted OPC UA client path relies on a library certificate-manager default that automatically trusts previously untrusted server certificates. Encryption therefore does not establish that the peer was explicitly approved during commissioning. No fixed product version is available for this finding.",
     "affected": [
       {
         "product": "Vision One OPC UA client connections, including the S7-1500 integration",
-        "versions": "The 27.3.0-rc.7 source driver and dependency lockfile match the reviewed local path using node-opcua-client 2.175.6. The locally installed certificate-manager implementation was inspected. No live PLC or published installer connection test was performed; earlier versions and the complete affected range remain unassessed.",
+        "versions": "Stable 27.3.0 retains the automatic trust behavior reviewed in the 27.3 release candidates, including the generic OPC UA and S7-1500 paths. No live PLC or published installer connection test was performed; the complete historical affected range remains unassessed.",
         "fixedVersions": [],
         "action": "Restrict OPC UA traffic to the intended PLC endpoints and trusted network paths. Review deployed peer identities and trust changes through the commissioning process. Do not treat the certificate inventory or expiry alarms as an enforced approval step. Coordinate a supported strict-trust correction with EN-CO; do not disable encryption or replace packaged modules."
       }
@@ -83,20 +84,20 @@
     "id": "VO-SA-2026-007",
     "title": "Login MFA and mandatory enrollment can be bypassed through session refresh",
     "published": "2026-11-18T20:21:11Z",
-    "updated": "2026-11-23T16:12:00Z",
+    "updated": "2026-11-27T13:38:56Z",
     "severity": "high",
     "severitySource": "product",
     "cvss": 8.1,
     "status": "resolved",
-    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9"],
-    "versionSummary": "Reviewed affected: 27.3.0-rc.7 · Prerelease correction: 27.3.0-rc.9.",
-    "summary": "Published signed 27.3.0-rc.9 corrects the reviewed login-MFA/enrollment session-refresh bypass by enforcing token purpose and account session version. RC 7 permits an intermediate token to become a full session without completing TOTP. A qualified prerelease correction is available; this is not a stable-channel release or a claim that every authentication risk is eliminated.",
+    "reviewedVersions": ["27.3.0-rc.7", "27.3.0-rc.9", "27.3.0"],
+    "versionSummary": "Reviewed affected: 27.3.0-rc.7 · Corrected in RC 9 and stable 27.3.0.",
+    "summary": "Published signed stable 27.3.0 retains the token-purpose and account-session-version enforcement introduced in RC 9 for login MFA, required enrollment and session refresh.",
     "affected": [
       {
         "product": "Vision One Server login MFA, TOTP enrollment and session refresh",
         "versions": "The relevant authentication API and JWT middleware in the published 27.3.0-rc.7 source tag match the tested current paths. Reproduction used real API/guard classes with simulated users, not a customer installation or downloaded installer. Earlier releases and the complete affected range have not been established and must not be assumed unaffected.",
-        "fixedVersions": ["27.3.0-rc.9 (published signed prerelease; token-purpose and session-version enforcement)"],
-        "action": "Where prerelease use is approved, evaluate signed RC 9 with backups, controlled restart and reauthentication. Older and stable-only installations require a supported remediation plan. Retain independently enforced OT segmentation/VPN authentication and primary-credential protection; do not disable MFA or replace packaged authentication files."
+        "fixedVersions": ["27.3.0-rc.9 (published signed prerelease; token-purpose and session-version enforcement)", "27.3.0 (published signed stable release)"],
+        "action": "Update to signed stable 27.3.0 with backups, controlled restart and reauthentication. Retain independently enforced OT segmentation/VPN authentication and primary-credential protection; do not disable MFA or replace packaged authentication files."
       }
     ],
     "impact": "A party holding a valid login-MFA or required-enrollment intermediate token can obtain the account's full session without completing the second factor. Obtaining that intermediate token through normal login first requires successful primary authentication; this is not a demonstrated anonymous password bypass. Resulting access is bounded by the account's current roles, potentially including administration. EN-CO product assessment: CVSS v3.1 Base 8.1 (High), vector CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N. Separate action-specific TOTP checks are not established as bypassed by this test. No active exploitation, customer compromise or assigned CVE is claimed.",
@@ -107,7 +108,7 @@
       "Both intermediate tokens were rejected directly by the protected test administration endpoint, but session refresh returned a full session accepted by that same endpoint. No TOTP verification or enrollment-confirmation call occurred. Three control checks passed: normal full-session refresh, rejection of invalid/expired tokens and rejection of refresh for a nonexistent user. Both security regressions requiring intermediate-token rejection failed. Test compilation passed; the security test exited with code 1. A previously successful release gate does not override this new failing evidence.",
       "The refresh guard validates signature and expiry but does not establish that a token represents completed authentication before issuing a new full session. Token-purpose separation and all consumers of intermediate/action tokens require review. No product fix was implemented or published in this assessment; the local reproduction does not establish the complete historical affected range."
     ],
-    "remediation": "Signed prerelease 27.3.0-rc.9 provides the tested token-purpose/session-version correction. Deploy only through approved prerelease maintenance with backups, controlled restart and reauthentication. Stable-only installations require supported remediation. Keep MFA enabled and retain independent access-gateway/OT restrictions; do not replace individual packaged authentication files.",
+    "remediation": "Install signed stable 27.3.0 under the approved maintenance procedure, with backups, controlled restart and reauthentication. Keep MFA enabled and retain independent access-gateway/OT restrictions; do not replace individual packaged authentication files.",
     "workarounds": [
       "Use independently enforced authenticated VPN/access-gateway controls and restrict who can reach the runtime. These controls reduce exposure but do not repair the application MFA defect or protect against an already authorized network peer with compromised primary credentials.",
       "Keep individual least-privilege accounts, protect primary credentials and review suspicious authentication/access activity. Older RC 7 password revocation is separately assessed in VO-SA-2026-009; RC 9 adds that notice's tested account-level correction without claiming comprehensive per-session logout revocation."
@@ -166,20 +167,20 @@
   },
   {
     "id": "VO-SA-2026-005",
-    "versionSummary": "Prerelease fix from 27.3.0-rc.3; external Node.js requires a separate update.",
+    "versionSummary": "Corrected from RC 3 and in stable 27.3.0; external Node.js requires a separate update.",
     "title": "November Node/Electron corrections and WebSocket pending-Pong applicability",
     "published": "2026-11-16T17:03:00Z",
-    "updated": "2026-11-18T16:33:36Z",
+    "updated": "2026-11-27T13:38:56Z",
     "severity": "not-rated",
     "status": "resolved",
-    "reviewedVersions": ["27.3.0-rc.2", "27.3.0-rc.3", "27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6", "27.3.0-rc.7"],
-    "summary": "Published signed release candidate 27.3.0-rc.3 updates Electron to 45.3.3 and all resolved Server/Client ws copies to 8.23.0. This notice records the November runtime correction baseline and the separate upstream automatic-Pong backlog correction, not the older Brotli or Forge findings. Product-specific exploitability and a complete affected-installer range have not been established. Resolution means a published updated prerelease is available, not a stable-channel patch or approval for unaccepted RC deployment.",
+    "reviewedVersions": ["27.3.0-rc.2", "27.3.0-rc.3", "27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6", "27.3.0-rc.7", "27.3.0"],
+    "summary": "Published signed stable 27.3.0 retains Electron 45.3.3 and ws 8.23.0 from RC 3 for the reviewed runtime and WebSocket corrections. Product-specific exploitability and a complete affected-installer range have not been established.",
     "affected": [
       {
         "product": "Vision One packaged Windows Runtime and WebSocket transports",
         "versions": "Reviewed RC 2 retains Electron 44.10.1 with Node 24.22.1 and older ws copies. RC 3 reports Electron 45.3.3, Node 24.22.3, Chromium 156.0.8078.100, llhttp 9.4.4 and Undici 7.30.2, and resolves ws 8.23.0 throughout Server/Client including Socket.IO consumers. Dependency inclusion alone is not demonstrated exploitability; earlier installers and integrations are not comprehensively assessed.",
-        "fixedVersions": ["27.3.0-rc.3 (published signed release candidate; updated Electron and ws baseline)", "27.3.0-rc.4 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0-rc.5 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0-rc.6 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0-rc.7 (published signed release candidate; same corrected Electron/ws baseline)"],
-        "action": "Evaluate the signed RC 3 only where prerelease use is approved, with backups, controlled restart and site acceptance. Stable-only installations should request a supported remediation plan. Do not manually replace packaged runtime or library files."
+        "fixedVersions": ["27.3.0-rc.3 (published signed release candidate; updated Electron and ws baseline)", "27.3.0-rc.4 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0-rc.5 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0-rc.6 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0-rc.7 (published signed release candidate; same corrected Electron/ws baseline)", "27.3.0 (published signed stable release; same corrected Electron/ws baseline)"],
+        "action": "Update to signed stable 27.3.0 with backups, controlled restart and site acceptance. Do not manually replace packaged runtime or library files."
       },
       {
         "product": "Separately managed Node.js server executable",
@@ -200,7 +201,7 @@
       "RC 3 additionally blocks foreign framing and filters license number/customer/site/project to valid signed-in sessions without another role. These bounded hardening changes retain direct browser access, open operational status and existing command/installation permissions; no general confidential-data or backend compromise claim is made.",
       "Revision 2026-11-17 20:23 UTC: signed RC 5 was published at 20:20:56Z after complete Windows workflow 44165315268 passed from 9229910c1a8cf192ca46095639d0dc8fd88ef62a. Downloaded installer SHA-256 8edfecf42bdf3c959e13d9fcf9f5199a81c94e20d2abed42dbd3bbfe4f229821 matches the checksum and GitHub digest; notes/audit match checked sources and CI verifies Authenticode. Electron/ws/standalone Node correction baselines are unchanged. The local preflight was explicitly skipped after a macOS Windows-helper failure, not counted as passed; CI independently ran the full gate. This is not stable or target-plant sign-off. The separate open picomatch build-tool finding is assessed in VO-SA-2026-006."
     ],
-    "remediation": "Use the signed RC 3 only under an approved prerelease maintenance and acceptance process; stable-only operators should coordinate supported remediation. Retain full-set backups and no-in-place-downgrade precautions. Restart updated processes. Update external Node and separately maintained tooling independently; do not disable TLS checks or replace individual packaged modules.",
+    "remediation": "Install signed stable 27.3.0 under the approved maintenance and acceptance procedure. Retain full-set backups and no-in-place-downgrade precautions. Restart updated processes. Update external Node and separately maintained tooling independently; do not disable TLS checks or replace individual packaged modules.",
     "workarounds": [
       "Restrict runtime and WebSocket endpoints to approved OT segments or VPNs, limit untrusted connections and apply appropriate reverse-proxy resource controls. These are exposure reductions, not a validated complete workaround or a patch.",
       "Keep build and maintenance inputs/network access restricted. A zero npm audit or successful login policy does not assess native runtime defects or prove all WebSocket paths safe."
@@ -216,21 +217,21 @@
   },
   {
     "id": "VO-SA-2026-004",
-    "versionSummary": "Prerelease fix from 27.3.0-beta.5; stable 27.2.5 remains affected.",
+    "versionSummary": "Corrected from beta 5 and in stable 27.3.0; 27.2.5 retains the affected dependency.",
     "title": "node-forge 1.4.3 corrections: certificate, Ed25519 and TLS/HTTP applicability",
     "published": "2026-11-11T09:22:43Z",
-    "updated": "2026-11-18T16:33:36Z",
+    "updated": "2026-11-27T13:38:56Z",
     "severity": "high",
     "severitySource": "upstream",
     "status": "resolved",
-    "reviewedVersions": ["27.2.5", "27.3.0-beta.4", "27.3.0-beta.5", "27.3.0-rc.1", "27.3.0-rc.2", "27.3.0-rc.3", "27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6", "27.3.0-rc.7"],
-    "summary": "Signed prerelease 27.3.0-beta.5 ships node-forge 1.4.3 in Server/PKI after successful Windows release validation. It corrects additional upstream certificate nameConstraints, Ed25519 small-order-key and Forge TLS/HTTP findings. Reviewed 27.2.5 and 27.3.0-beta.4 lockfiles include 1.4.2. A remotely exploitable Vision One path has not been established. Resolution identifies a published patched prerelease, not a stable-channel patch or a recommendation to deploy beta software without acceptance.",
+    "reviewedVersions": ["27.2.5", "27.3.0-beta.4", "27.3.0-beta.5", "27.3.0-rc.1", "27.3.0-rc.2", "27.3.0-rc.3", "27.3.0-rc.4", "27.3.0-rc.5", "27.3.0-rc.6", "27.3.0-rc.7", "27.3.0"],
+    "summary": "Published signed stable 27.3.0 retains node-forge 1.4.3 in Server/PKI, first published in beta 5. It contains the reviewed upstream certificate nameConstraints, Ed25519 and Forge TLS/HTTP corrections. 27.2.5 and beta 4 include 1.4.2. A remotely exploitable Vision One path has not been established.",
     "affected": [
       {
         "product": "Vision One Server / packaged Windows Runtime and separately maintained PKI tooling",
         "versions": "Reviewed 27.2.5 and 27.3.0-beta.4 include node-forge 1.4.2, within the upstream affected dependency range. This is dependency inclusion, not demonstrated product exploitability. Earlier releases, customer integrations and dynamic third-party paths have not been comprehensively assessed and must not be assumed unaffected.",
-        "fixedVersions": ["27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)", "27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.5 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.6 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.7 (published signed release candidate; node-forge 1.4.3)"],
-        "action": "For environments approved for prerelease use, evaluate the signed beta-5 installer with backups and site acceptance. Stable 27.2.5 is not a fix for these additional findings; stable-only installations should request a supported remediation plan. Do not manually replace packaged libraries. Separately deployed PKI tooling requires its own controlled update."
+        "fixedVersions": ["27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)", "27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.5 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.6 (published signed release candidate; node-forge 1.4.3)", "27.3.0-rc.7 (published signed release candidate; node-forge 1.4.3)", "27.3.0 (published signed stable release; node-forge 1.4.3)"],
+        "action": "Update to signed stable 27.3.0 with backups and site acceptance. Do not manually replace packaged libraries. Separately deployed PKI tooling requires its own controlled update."
       }
     ],
     "impact": "Upstream rates the nameConstraints chain-verification finding High, Forge TLS/HTTP denial-of-service findings Moderate and Ed25519 small-order-key verification Low (CVE-2026-125335). Impacts concern certificate-chain acceptance outside permitted names, forged-signature acceptance for small-order keys, TLS client crashes and HTTP parsing CPU exhaustion in the corresponding Forge APIs. These are upstream impacts and ratings, not demonstrated Vision One attacks or a product-specific CVSS score. No license, authentication or runtime TLS bypass has been demonstrated by this review.",
@@ -250,7 +251,7 @@
       "This notice covers the additional 1.4.3 findings, separately from the older RSA CVE in VO-SA-2026-001. The previously published 1.4.2 RSA correction remains valid for that distinct issue. A beta fix must not be misread as a stable 27.2 patch; stable-only operators still require coordinated supported remediation.",
       "Revision 2026-11-17 20:23 UTC: published signed RC 5 passed complete Windows workflow 44165315268. Downloaded installer checksum/GitHub digest and matching notes/audit were verified; CI verifies Authenticode. node-forge remains 1.4.3, so this extends reviewed published scope, not a new Forge correction or stable sign-off. Stable 27.2.5 retains 1.4.2; the separate unpatched build-tool finding is VO-SA-2026-006."
     ],
-    "remediation": "Use the signed 27.3.0-beta.5 installer only where prerelease deployment is approved, after full backups and installation-specific acceptance. Stable-only installations should request a supported remediation plan; 27.2.5 retains the affected dependency for these new findings. Do not replace individual packaged modules or disable certificate checks. Update separately deployed PKI tooling through its supported maintenance process, retain existing private material and review any required certificate/fingerprint trust changes. Restart updated services under the maintenance procedure.",
+    "remediation": "Install signed stable 27.3.0 after full backups and installation-specific acceptance. Do not replace individual packaged modules or disable certificate checks. Update separately deployed PKI tooling through its supported maintenance process, retain existing private material and review any required certificate/fingerprint trust changes. Restart updated services under the maintenance procedure.",
     "workarounds": [
       "Keep runtime, replication and maintenance endpoints within approved OT segments or VPNs and restrict filesystem access to certificate/key/CSR material. These measures reduce exposure but do not patch the library or establish a complete workaround.",
       "Accept external PKI material only from approved sources; retain TLS hostname, chain and peer-fingerprint verification. Inventory custom integrations that invoke Forge Ed25519, TLS, HTTP or certificate-chain verification and request an installation-specific assessment.",

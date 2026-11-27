@@ -394,13 +394,13 @@ test('additional Forge findings distinguish the published beta fix from the stab
   const notice = advisories.find((advisory) => advisory.id === 'VO-SA-2026-004');
   assert.equal(notice.severitySource, 'upstream');
   assert.equal(notice.cvss, undefined);
-  assert.deepEqual(notice.reviewedVersions, ['27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7']);
-  assert.deepEqual(notice.affected[0].fixedVersions, ['27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)', '27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.5 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.6 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.7 (published signed release candidate; node-forge 1.4.3)']);
-  assert.match(notice.remediation, /Stable-only installations should request a supported remediation plan/);
+  assert.deepEqual(notice.reviewedVersions, ['27.2.5', '27.3.0-beta.4', '27.3.0-beta.5', '27.3.0-rc.1', '27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7', '27.3.0']);
+  assert.deepEqual(notice.affected[0].fixedVersions, ['27.3.0-beta.5 (published signed prerelease; node-forge 1.4.3)', '27.3.0-rc.1 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.2 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.3 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.4 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.5 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.6 (published signed release candidate; node-forge 1.4.3)', '27.3.0-rc.7 (published signed release candidate; node-forge 1.4.3)', '27.3.0 (published signed stable release; node-forge 1.4.3)']);
+  assert.match(notice.remediation, /Install signed stable 27\.3\.0/);
   assert.match(notice.summary, /remotely exploitable Vision One path has not been established/);
-  assert.match(review.productVersion, /stable baseline 27\.2\.5 retains node-forge 1\.4\.2/);
+  assert.match(review.checks.find(check => check.component === 'PKI').assessment, /27\.2\.5 retains 1\.4\.2/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-004/index.html'), 'utf8');
-  for (const text of ['GHSA-3cc4-3294-vgjf', 'GHSA-6889-vf6x-f3g5', 'GHSA-w4xr-hqv8-ch44', 'GHSA-6cv4-p8m7-4r25', 'GHSA-j8rw-jp99-435v', 'CVE-2026-125335', 'not a stable-channel patch', '42992655669']) {
+  for (const text of ['GHSA-3cc4-3294-vgjf', 'GHSA-6889-vf6x-f3g5', 'GHSA-w4xr-hqv8-ch44', 'GHSA-6cv4-p8m7-4r25', 'GHSA-j8rw-jp99-435v', 'CVE-2026-125335', 'published signed stable release', '42992655669']) {
     assert.ok(detail.includes(text), `Missing scope/reference: ${text}`);
   }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
@@ -418,13 +418,13 @@ test('November runtime notice distinguishes published RC qualification from prod
   assert.equal(notice.status, 'resolved');
   assert.equal(notice.severity, 'not-rated');
   assert.deepEqual(notice.cves, []);
-  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7']);
+  assert.deepEqual(notice.reviewedVersions, ['27.3.0-rc.2', '27.3.0-rc.3', '27.3.0-rc.4', '27.3.0-rc.5', '27.3.0-rc.6', '27.3.0-rc.7', '27.3.0']);
   assert.match(notice.affected[0].fixedVersions[0], /27\.3\.0-rc\.3/);
-  assert.match(notice.remediation, /stable-only operators should coordinate supported remediation/);
-  assert.match(review.productVersion, /27\.3\.0-rc\.11/);
-  assert.match(notice.affected[0].fixedVersions.at(-1), /27\.3\.0-rc\.7/);
+  assert.match(notice.remediation, /Update external Node/);
+  assert.match(review.productVersion, /^27\.3\.0 \(published signed stable release/);
+  assert.match(notice.affected[0].fixedVersions.at(-1), /^27\.3\.0 \(published signed stable release/);
   const detail = await readFile(path.join(output, 'advisories/VO-SA-2026-005/index.html'), 'utf8');
-  for (const text of ['43910712013', '45.3.3', '24.22.3', '8.23.0', '60-pending-reply', 'not a combined product CVSS', 'not a stable-channel patch', 'No destructive native-trigger', '26.13.1']) {
+  for (const text of ['43910712013', '45.3.3', '24.22.3', '8.23.0', '60-pending-reply', 'not a combined product CVSS', 'published signed stable release', 'No destructive native-trigger', '26.13.1']) {
     assert.ok(detail.includes(text), `Missing November qualification: ${text}`);
   }
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
@@ -469,10 +469,8 @@ test('the node-forge revision records the published fix and retains historical e
   assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
   assert.match(feed, /VO-SA-2026-001/);
   assert.doesNotMatch(detail, /No product advisories published yet/);
-  for (const relative of ['index.html', 'advisories/index.html']) {
-    const html = await readFile(path.join(output, relative), 'utf8');
-    assert.match(html, /Versions:<\/strong> Reviewed affected: 27\.2\.0–27\.2\.3 · Fixed from 27\.2\.4\./);
-  }
+  const archive = await readFile(path.join(output, 'advisories/index.html'), 'utf8');
+  assert.match(archive, /Versions:<\/strong> Reviewed affected: 27\.2\.0–27\.2\.3 · Fixed from 27\.2\.4\./);
 });
 
 test('the withdrawn picomatch notice retains history without claiming a package or product fix', async (t) => {
@@ -501,8 +499,8 @@ test('the withdrawn picomatch notice retains history without claiming a package 
   const page = await readFile(path.join(output, 'security-status/index.html'), 'utf8');
   assert.match(page, /1 open or mitigated notice in this archive/);
   assert.match(page, /Withdrawal is not a package patch or a product fix/);
-  assert.match(page, /local full preflight skipped/);
-  assert.match(review.productVersion, /complete Windows gate passed/);
+  assert.match(page, /local and Windows workflow 46006511013 release checks passed/);
+  assert.match(review.productVersion, /published signed stable release/);
   const feed = await readFile(path.join(output, 'advisories.atom'), 'utf8');
   assert.match(feed, /VO-SA-2026-006/);
   assert.equal((feed.match(/<entry>/g) ?? []).length, advisories.length);
@@ -537,15 +535,15 @@ test('resolved notice summaries retain fix-channel boundaries and do not manufac
     assert.ok(notice.versionSummary);
     assert.ok(archive.includes(escape(notice.versionSummary)));
     assert.ok(notice.reviewedVersions.includes('27.3.0-rc.7'), 'retain historical review evidence');
-    assert.equal(notice.updated, '2026-11-18T16:33:36Z', 'presentation does not create a technical reassessment');
+    assert.equal(notice.updated, notice.reviewedVersions.includes('27.3.0') ? '2026-11-27T13:38:56Z' : '2026-11-18T16:33:36Z');
     assert.ok(!archive.includes(`<strong>Reviewed versions:</strong> ${notice.reviewedVersions.join(' · ')}`));
   }
   const byId = id => advisories.find(entry => entry.id === id);
   assert.match(byId('VO-SA-2026-001').versionSummary, /Fixed from 27\.2\.4/);
   assert.match(byId('VO-SA-2026-002').versionSummary, /Fixed from 27\.2\.5/);
   assert.match(byId('VO-SA-2026-003').versionSummary, /confirmed corrected.*27\.2\.4.*separately/);
-  assert.match(byId('VO-SA-2026-004').versionSummary, /Prerelease.*beta\.5; stable 27\.2\.5 remains affected/);
-  assert.match(byId('VO-SA-2026-005').versionSummary, /Prerelease.*rc\.3; external Node\.js/);
+  assert.match(byId('VO-SA-2026-004').versionSummary, /stable 27\.3\.0; 27\.2\.5 retains the affected dependency/);
+  assert.match(byId('VO-SA-2026-005').versionSummary, /stable 27\.3\.0; external Node\.js/);
 });
 
 test('RC-7 historical publication evidence survives RC-9 review without rewriting older resolved notices', async (t) => {
@@ -556,10 +554,12 @@ test('RC-7 historical publication evidence survives RC-9 review without rewritin
   assert.equal(originalNotices.length, 6);
   for (const advisory of originalNotices) {
     assert.ok(advisory.reviewedVersions.includes('27.3.0-rc.7'));
-    assert.equal(advisory.updated, advisory.id === 'VO-SA-2026-006' ? '2026-11-23T16:12:00Z' : '2026-11-18T16:33:36Z');
+    if (!advisory.reviewedVersions.includes('27.3.0')) {
+      assert.equal(advisory.updated, advisory.id === 'VO-SA-2026-006' ? '2026-11-23T16:12:00Z' : '2026-11-18T16:33:36Z');
+    }
     assert.ok(advisory.assessment.some((paragraph) => paragraph.includes('44344735750')));
   }
-  assert.match(review.productVersion, /^27\.3\.0-rc\.11 \(published signed release candidate/);
+  assert.match(review.productVersion, /^27\.3\.0 \(published signed stable release/);
   assert.match(review.checks.find((check) => check.component === 'PKI').assessment, /stable 27\.2\.5 retains 1\.4\.2 and remains unfixed/);
   const withdrawn = advisories.find((advisory) => advisory.status === 'withdrawn');
   assert.equal(withdrawn.id, 'VO-SA-2026-006');
@@ -593,13 +593,13 @@ test('RC-9 resolves the two qualified authentication findings while retaining op
     assert.equal(Math.ceil(Math.round((impact + exploitability) * 100000) / 10000) / 10, notice.cvss);
     assert.deepEqual(notice.cves, []);
     assert.deepEqual(notice.reviewedVersions, corrected
-      ? ['27.3.0-rc.7', '27.3.0-rc.9']
-      : ['27.3.0-rc.7', '27.3.0-rc.9', '27.3.0-rc.10', '27.3.0-rc.11']);
+      ? ['27.3.0-rc.7', '27.3.0-rc.9', '27.3.0']
+      : ['27.3.0-rc.7', '27.3.0-rc.9', '27.3.0-rc.10', '27.3.0-rc.11', '27.3.0']);
     assert.ok(notice.affected.every((entry) => corrected
-      ? entry.fixedVersions.length === 1 && entry.fixedVersions[0].startsWith('27.3.0-rc.9')
+      ? entry.fixedVersions.length === 2 && entry.fixedVersions[0].startsWith('27.3.0-rc.9') && entry.fixedVersions[1].startsWith('27.3.0 (')
       : entry.fixedVersions.length === 0));
     assert.equal(notice.published, '2026-11-18T20:21:11Z');
-    assert.equal(notice.updated, corrected ? '2026-11-23T16:12:00Z' : review.reviewedAt);
+    assert.equal(notice.updated, review.reviewedAt);
     assert.ok(feed.includes(id));
     const detail = await readFile(path.join(output, `advisories/${id}/index.html`), 'utf8');
     assert.match(detail, corrected ? /Status: resolved/ : /Status: open/);
@@ -613,12 +613,12 @@ test('RC-9 resolves the two qualified authentication findings while retaining op
   assert.match(byId('VO-SA-2026-008').assessment.join(' '), /not a demonstrated network interception attack/);
   assert.match(byId('VO-SA-2026-009').assessment.join(' '), /not a newly executed end-to-end password-reset exploit test/);
   assert.match(byId('VO-SA-2026-009').impact, /does not preserve roles that have been removed/);
-  assert.match(review.checks.find((check) => check.component === 'Server').assessment, /Fresh 2026-11-23 full npm audit/);
+  assert.match(review.checks.find((check) => check.component === 'Server').assessment, /Full npm audit on 2026-11-27/);
   assert.match(byId('VO-SA-2026-007').assessment[0], /45209207131/);
   assert.match(byId('VO-SA-2026-009').remediation, /not be described as comprehensive server-side per-session revocation/);
   assert.match(page, /1 open or mitigated notice/);
   assert.match(page, /VO-SA-2026-008/);
-  assert.equal(review.reviewedAt, '2026-11-26T14:43:21Z');
-  assert.match(review.productVersion, /27\.3\.0-rc\.11/);
+  assert.equal(review.reviewedAt, '2026-11-27T13:38:56Z');
+  assert.match(review.productVersion, /^27\.3\.0 \(published signed stable release/);
   assert.ok(byId('VO-SA-2026-008').reviewedVersions.includes('27.3.0-rc.11'));
 });
